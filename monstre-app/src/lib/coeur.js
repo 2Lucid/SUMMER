@@ -6,6 +6,14 @@ export const ACTIONS = {
   rateau: { label: "Râteau encaissé", tag: "Seuls les joueurs peuvent en prendre", emoji: "🥀", xp: 75, fear: false, closes: true },
   couple: { label: "En couple", tag: "LOOT LÉGENDAIRE", emoji: "💘", xp: 500, fear: false, once: true, legendary: true },
   irl: { label: "Action courage IRL", tag: "Compliment, question, approche…", emoji: "⚡", xp: 30, fear: true, global: true },
+  // --- Mode couple : entretien & croissance de la relation ---
+  grat: { label: "Gratitude exprimée", tag: "Dis-lui ce que tu apprécies", emoji: "🙏", xp: 25, couple: true },
+  attn: { label: "Petite attention", tag: "Un geste, une surprise", emoji: "🎁", xp: 30, couple: true },
+  ecoute: { label: "Écoute active", tag: "Tu accueilles son « bid »", emoji: "👂", xp: 30, couple: true },
+  qtime: { label: "Temps de qualité", tag: "Sans écran, ensemble", emoji: "🕯️", xp: 40, couple: true },
+  lovemap: { label: "Question profonde posée", tag: "Tu enrichis ta love map", emoji: "🗺️", xp: 35, couple: true },
+  repair: { label: "Réparation après tension", tag: "Le muscle qui sauve les couples", emoji: "🛠️", xp: 60, couple: true, boss: true },
+  datec: { label: "Date à deux", tag: "Rituel de connexion", emoji: "💞", xp: 80, couple: true, boss: true },
 };
 export const LEVELS = [
   { xp: 0, t: "Spectateur" }, { xp: 100, t: "Rookie" }, { xp: 250, t: "Audacieux" }, { xp: 450, t: "Stratège" },
