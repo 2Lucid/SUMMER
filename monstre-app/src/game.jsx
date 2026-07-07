@@ -5,7 +5,7 @@ import { uid, todayKey, yesterday, addDays, dkOf, pick, shuffle, frn } from "./l
 import { ACTIONS, LEVELS, EMOJIS, DAILY_BONUS, levelIndex } from "./lib/coeur.js";
 import { DOMAINS, genDrill } from "./lib/drill.js";
 import { buildExam } from "./lib/exam.js";
-import { FLASH, BOX_GAP } from "./lib/flash.js";
+import { FLASH, BOX_GAP, rankOf } from "./lib/flash.js";
 import * as W from "./lib/work.js";
 import * as STU from "./lib/study.js";
 
@@ -78,14 +78,20 @@ export function GameProvider({ children }) {
   const setCouple = v => { const cur = getS(); setS({ ...cur, couple: !!v }); fx.toast(v ? "C'est noté 💞 En couple." : "C'est noté 🔥 Célibataire — à toi de jouer."); };
 
   /* --- Chrono de travail prépa (global, sur toutes les pages) --- */
-  const STUDY_CAP = 12 * 3600000;  // garde-fou : chrono oublié → max 12 h créditées
   const studyStart = () => { const cur = getS(); const st = cur.study || { running: null, sessions: [] }; if (st.running) return; setS({ ...cur, study: { ...st, running: { startedAt: Date.now() } } }); fx.toast("⏱️ Chrono prépa lancé — au boulot 👊"); };
   const studyStop = () => { const cur = getS(); const st = cur.study || { running: null, sessions: [] }; if (!st.running) return;
-    let ms = Math.max(0, Date.now() - st.running.startedAt); const capped = ms > STUDY_CAP; if (capped) ms = STUDY_CAP;
-    if (ms < 30000) { setS({ ...cur, study: { ...st, running: null } }); fx.toast("Trop court pour compter (min 30 s) ⏳"); return; }
-    const sess = { id: uid(), ms, dk: todayKey(), ts: Date.now() };
-    setS({ ...cur, study: { running: null, sessions: [...(st.sessions || []), sess] } });
-    fx.toast("✅ +" + STU.human(ms) + " de prépa enregistrées 📚" + (capped ? " (plafonné à 12 h)" : "")); };
+    let ms = Math.max(0, Date.now() - st.running.startedAt); const capped = ms > STU.HARD_CAP_MS; if (capped) ms = STU.HARD_CAP_MS;
+    if (ms < STU.MIN_SESSION_MS) { setS({ ...cur, study: { ...st, running: null } }); fx.toast("Trop court — il faut au moins 10 min pour que ça compte ⏳"); return; }
+    const priorMin = STU.dayMs(cur, todayKey()) / 60000;              // temps déjà enregistré aujourd'hui (plafond XP à 8 h)
+    const xpGain = STU.sessionXP(priorMin, ms / 60000);
+    const prevRank = rankOf(cur.skills.xp || 0).name;
+    const skills = { ...cur.skills, xp: (cur.skills.xp || 0) + xpGain };
+    const sess = { id: uid(), ms, dk: todayKey(), ts: Date.now(), xp: xpGain };
+    setS({ ...cur, study: { running: null, sessions: [...(st.sessions || []), sess] }, skills });
+    const note = capped ? " (plafonné à 12 h)" : (xpGain === 0 ? " · plafond du jour 8 h atteint (0 XP)" : "");
+    fx.toast("✅ +" + STU.human(ms) + (xpGain > 0 ? " · +" + xpGain + " XP prépa" : "") + " 📚" + note);
+    if (ms / 60000 >= 45 && xpGain > 0) fx.confetti(40);
+    const newRank = rankOf(skills.xp).name; if (newRank !== prevRank && xpGain > 0) { fx.confetti(60); setTimeout(() => fx.toast("⭐ Nouveau rang prépa : " + newRank), 1700); } };
 
   /* --- Prépa (jour / sommeil) --- */
   const toggleDay = id => { const cur = getS(); const tk = todayKey(); const ch = cur.days[tk] || {}; setS({ ...cur, days: { ...cur.days, [tk]: { ...ch, [id]: !ch[id] } } }); };

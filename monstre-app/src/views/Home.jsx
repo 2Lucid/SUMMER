@@ -73,7 +73,7 @@ export default function Home() {
         <div className="sh-side">
           <div><b>{STU.human(studyToday)}</b><span>aujourd'hui</span></div>
           <div><b>{STU.human(studyWeek)}</b><span>7 jours</span></div>
-          <div><b>{STU.sessionCount(S)}</b><span>sessions</span></div>
+          <div><b>+{STU.totalXP(S)}</b><span>XP prépa</span></div>
         </div>
       </div>
 

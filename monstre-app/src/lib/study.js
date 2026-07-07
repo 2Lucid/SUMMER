@@ -8,6 +8,18 @@ import { todayKey, addDays } from "./util.js";
 const S0 = { running: null, sessions: [] };
 export const study = S => (S && S.study) || S0;
 
+/* ── ÉQUILIBRAGE XP ──────────────────────────────────────────────────────── */
+export const MIN_SESSION_MS   = 10 * 60000;   // < 10 min = ne compte pas (ni temps ni XP)
+export const XP_PER_MIN       = 1;            // 1 min concentrée = 1 XP prépa (rangs : 250/700/1500/3000)
+export const DAILY_XP_CAP_MIN = 480;          // 8 h créditées / jour max — au-delà : temps compté, 0 XP
+export const HARD_CAP_MS      = 12 * 3600000; // garde-fou chrono oublié : max 12 h enregistrées
+
+/* XP d'une nouvelle session, en tenant compte du temps DÉJÀ enregistré aujourd'hui (plafond 8 h) */
+export function sessionXP(priorTodayMin, sessionMin) {
+  const creditable = Math.max(0, Math.min(sessionMin, DAILY_XP_CAP_MIN - priorTodayMin));
+  return Math.round(creditable * XP_PER_MIN);
+}
+
 /* millisecondes du chrono EN COURS (0 si arrêté) — passe Date.now() au render */
 export const runMs = (S, now) => { const r = study(S).running; return r && r.startedAt ? Math.max(0, now - r.startedAt) : 0; };
 export const isRunning = S => !!study(S).running;
@@ -18,6 +30,10 @@ export const dayMs   = (S, dk) => (study(S).sessions || []).filter(s => s.dk ===
 export const rangeMs = (S, fromDk) => (study(S).sessions || []).filter(s => s.dk >= fromDk).reduce((n, s) => n + (s.ms || 0), 0);
 export const weekMs  = (S, dk) => rangeMs(S, addDays(dk, -6));
 export const sessionCount = S => (study(S).sessions || []).length;
+
+/* XP prépa gagné via le chrono (par session : s.xp) */
+export const totalXP = S => (study(S).sessions || []).reduce((n, s) => n + (s.xp || 0), 0);
+export const dayXP   = (S, dk) => (study(S).sessions || []).filter(s => s.dk === dk).reduce((n, s) => n + (s.xp || 0), 0);
 
 /* variantes LIVE (incluent le chrono en cours) */
 export const liveTotal = (S, now) => totalMs(S) + runMs(S, now);
