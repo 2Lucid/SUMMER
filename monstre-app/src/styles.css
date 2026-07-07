@@ -978,3 +978,35 @@ body.paper .study-home .sh-side b{color:var(--pink-ink)}
 .mm-dir{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;font-weight:700;color:var(--pencil);flex-wrap:wrap}
 .mm-dir button{background:var(--pcard);border:1.5px solid var(--pline);color:var(--pencil);font-family:var(--body);font-weight:700;font-size:12.5px;padding:6px 11px;border-radius:99px;cursor:pointer}
 .mm-dir button.on{background:var(--bic);border-color:var(--bic);color:#fff}
+
+/* --- Calcul mental : jeu intégré --- */
+.mm-ops{display:flex;gap:8px}
+.mm-ops button{flex:1;background:var(--pcard);border:1.5px solid var(--pline);color:var(--pencil);font-family:var(--disp);font-weight:900;font-size:22px;padding:10px 0;border-radius:11px;cursor:pointer}
+.mm-ops button.on{background:var(--bic);border-color:var(--bic);color:#fff}
+.mm-durs{display:flex;gap:8px}
+.mm-durs button{flex:1;background:var(--pcard);border:1.5px solid var(--pline);color:var(--pencil);font-family:var(--body);font-weight:700;font-size:14px;padding:9px 0;border-radius:11px;cursor:pointer}
+.mm-durs button.on{background:var(--pink-ink);border-color:var(--pink-ink);color:#fff}
+.p-btn:disabled{opacity:.45;cursor:not-allowed}
+
+.mm-play{display:flex;flex-direction:column;align-items:center}
+.mm-hud{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:420px;margin-top:4px}
+.mm-hud-b{display:flex;flex-direction:column;align-items:center;min-width:64px}
+.mm-hud-b .v{font-family:var(--disp);font-weight:900;font-size:24px;color:var(--pink-ink)}
+.mm-hud-b .l{font-size:10.5px;color:var(--pencil);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.mm-timer{font-family:var(--disp);font-weight:900;font-size:30px;color:var(--bic)}
+.mm-timer.warn{color:var(--penred)}
+.mm-prob{font-family:var(--disp);font-weight:900;font-size:clamp(34px,11vw,52px);color:var(--pink-ink);margin:22px 0 10px;letter-spacing:.02em}
+.mm-answer{min-height:46px;font-family:var(--disp);font-weight:800;font-size:34px;color:var(--green);border-bottom:3px solid var(--pline);min-width:150px;text-align:center;padding-bottom:4px}
+.mm-answer .ph{color:var(--pline)}
+.mm-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;max-width:340px;margin-top:22px}
+.mm-pad button{background:var(--pcard);border:1.5px solid var(--pline);color:var(--pink-ink);font-family:var(--disp);font-weight:800;font-size:24px;padding:16px 0;border-radius:13px;cursor:pointer;user-select:none}
+.mm-pad button:active{background:var(--bic);color:#fff}
+.mm-pad button.alt{font-size:18px;color:var(--pencil)}
+.mm-pad button.skip{font-size:14px;font-weight:700}
+
+.mm-done{text-align:center;padding:20px 0}
+.mm-done-score{font-family:var(--disp);font-weight:900;font-size:64px;line-height:1;color:var(--green);margin:2px 0}
+
+.mm-import{margin-top:18px;border-top:1px solid var(--pline);padding-top:10px}
+.mm-import summary{font-size:12.5px;color:var(--pencil);cursor:pointer;font-weight:600;list-style:none}
+.mm-import summary::-webkit-details-marker{display:none}
