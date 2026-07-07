@@ -47,6 +47,7 @@ export const SCI_BY_DAY = { 1: "Physique", 2: "Chimie (devoir en cours)", 3: "SI
 /* ── XP prépa (alimente skills.xp → rang « Étoile ») ──────────────────────── */
 export const CHECK_XP    = 5;   // item de la checklist du jour coché (−5 si décoché : non exploitable)
 export const DEADLINE_XP = 40;  // devoir/DM rendu
+export const MENTAL_XP   = 15;  // partie de calcul mental enregistrée (1 par seed)
 
 /* ── BLOCS DE TRAVAIL PRÉPA (créneaux horaires) ───────────────────────────────
  * Version « posée dans le calendrier » de la journée type : RESET = matin +

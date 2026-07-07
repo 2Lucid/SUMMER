@@ -941,3 +941,28 @@ body.paper .study-home .sh-side b{color:var(--pink-ink)}
 .mtx{white-space:normal}
 .katex{font-size:1.04em;line-height:normal}
 .exq-sol .katex,.exq-q .katex,.p-choice .katex,.p-flash .katex{color:inherit}
+
+/* ===== Calcul mental (onglet prépa) ===== */
+.mm-paste{width:100%;background:var(--pcard);border:1.5px solid var(--pline);border-radius:11px;color:var(--pink-ink);font-family:var(--body);font-size:14px;line-height:1.4;padding:11px 12px;resize:vertical;outline:none}
+.mm-paste:focus{border-color:var(--bic)}
+.mm-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:14px}
+@media(min-width:560px){.mm-stats{grid-template-columns:repeat(4,1fr)}}
+.mm-stat{background:var(--pcard);border:1.5px solid var(--pline);border-radius:12px;padding:11px 12px}
+.mm-stat .v{font-family:var(--disp);font-weight:900;font-size:22px;line-height:1.05;color:var(--pink-ink)}
+.mm-stat .l{font-size:10.5px;color:var(--pencil);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:5px}
+.mm-stat .s{font-size:11px;color:var(--pencil);margin-top:3px}
+.mm-evo{display:flex;align-items:flex-end;gap:6px;height:150px;margin-top:12px;padding-top:16px}
+.mm-eb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;min-width:0}
+.mm-eb .mm-ev{font-family:var(--disp);font-weight:800;font-size:11px;color:var(--pencil);margin-bottom:3px}
+.mm-eb .mm-bar{width:70%;max-width:26px;background:var(--bic);border-radius:5px 5px 0 0;min-height:6px}
+.mm-eb.best .mm-bar{background:var(--green)}
+.mm-eb.best .mm-ev{color:var(--green)}
+.mm-eb .mm-crown{position:absolute;top:-14px;font-size:12px}
+.mm-eb .mm-day{font-size:9.5px;color:var(--pencil);margin-top:4px;white-space:nowrap}
+.mm-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--pline)}
+.mm-row .mm-score{font-family:var(--disp);font-weight:900;font-size:17px;color:var(--pink-ink);min-width:56px}
+.mm-row .mm-score.best{color:var(--green)}
+.mm-row .mm-meta{flex:1;font-size:12.5px;color:var(--pencil);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mm-row .mm-replay{text-decoration:none;font-size:16px;color:var(--bic);padding:2px 6px;border-radius:8px}
+.mm-row .mm-del{background:none;border:none;color:var(--pencil);font-size:13px;cursor:pointer;padding:2px 6px;opacity:.6;border-radius:8px}
+.mm-row .mm-del:hover{opacity:1;color:var(--penred)}

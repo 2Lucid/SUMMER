@@ -5,7 +5,7 @@ import { todayKey, addDays } from "./lib/util.js";
 export const DEFAULT = () => ({
   quests: [], log: [], xp: 0, streak: 0, best: 0, lastDay: null,
   days: {}, skills: { xp: 0, d: {} }, flash: {}, sleep: {}, todos: {}, deadlinesDone: {},
-  exams: [], coeurDaily: {}, coeurCheck: null,
+  exams: [], mental: [], coeurDaily: {}, coeurCheck: null,
   couple: null,         // en couple ? null = pas encore demandé, true/false = réponse
 
   chests: { opened: [] },  // coffres récompenses déjà ouverts (ids)
