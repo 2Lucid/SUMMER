@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useGame } from "../../game.jsx";
 import { DOMAINS } from "../../lib/drill.js";
+import MathText from "../../components/MathText.jsx";
 
 function Chrono({ t0 }) {
   const [, tick] = useState(0);
@@ -48,13 +49,13 @@ export default function Drill() {
       </div>
       <div className="p-card ink">
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--bic)", marginBottom: 4 }}>{DOMAINS.find(d => d.id === q.dom).name} · niv. {q.lvl}</div>
-        <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.35 }}>{q.q}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.35 }}><MathText>{q.q}</MathText></div>
       </div>
-      {!s.fb && q.choices.map((c, i) => <button key={i} className="p-choice" onClick={() => drillSubmit(c)}>{c}</button>)}
+      {!s.fb && q.choices.map((c, i) => <button key={i} className="p-choice" onClick={() => drillSubmit(c)}><MathText>{c}</MathText></button>)}
       {s.fb && (
         <div className={"p-fb " + (s.fb.ok ? "ok" : "no")}>
           <div style={{ fontWeight: 800, color: s.fb.ok ? "var(--green)" : "var(--penred)" }}>{s.fb.ok ? "✓ Exact." : "✗ Raté."}</div>
-          {!s.fb.ok && <div style={{ fontSize: 14, marginTop: 4 }}>Réponse : <b>{s.fb.sol}</b> <span className="pen p-red" style={{ fontSize: 17 }}>(elle revient plus loin)</span></div>}
+          {!s.fb.ok && <div style={{ fontSize: 14, marginTop: 4 }}>Réponse : <b><MathText>{s.fb.sol}</MathText></b> <span className="pen p-red" style={{ fontSize: 17 }}>(elle revient plus loin)</span></div>}
           <button className="p-btn ink" style={{ marginTop: 10 }} onClick={drillNext}>Suivant →</button>
         </div>
       )}

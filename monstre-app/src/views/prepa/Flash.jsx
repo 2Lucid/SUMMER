@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useGame } from "../../game.jsx";
 import { todayKey } from "../../lib/util.js";
 import { FLASH, SUBJECTS } from "../../lib/flash.js";
+import MathText from "../../components/MathText.jsx";
 
 export default function Flash() {
   const { S, ui, startFlash, flipFlash, gradeFlash, setFlashSubj } = useGame();
@@ -60,8 +61,8 @@ export default function Flash() {
       {picker}
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--pencil)" }}>Carte {st.idx + 1}/{st.queue.length} · {sjMeta ? sjMeta.emoji + " " : ""}deck « {c.deck} » · dues : {nDue}</div>
       <button className="p-flash" onClick={flipFlash}>
-        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.35 }}>{c.front}</div>
-        {st.rev ? <div className="pen p-red" style={{ fontSize: 24, lineHeight: 1.3 }}>{c.back}</div> : <div className="p-sub">touche pour révéler</div>}
+        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.35 }}><MathText>{c.front}</MathText></div>
+        {st.rev ? <div className="pen p-red" style={{ fontSize: 24, lineHeight: 1.3 }}><MathText>{c.back}</MathText></div> : <div className="p-sub">touche pour révéler</div>}
       </button>
       {st.rev && (
         <div className="p-grid2" style={{ marginTop: 10 }}>

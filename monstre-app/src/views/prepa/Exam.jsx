@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useGame } from "../../game.jsx";
 import { pad, frn, rd1, fromDk, frDate } from "../../lib/util.js";
+import MathText from "../../components/MathText.jsx";
 
 const SUBS = [["maths", "Maths", "calcul, fonctions, suites…"], ["phys", "Physique", "méca, élec, ondes, optique"], ["mixte", "Mixte", "moitié-moitié"]];
 const MINS = [[30, "30 min", "court"], [45, "45 min", "standard"], [60, "1 h", "le vrai défi"]];
@@ -52,7 +53,7 @@ function Running({ e }) {
       <ExamTimer endsAt={e.endsAt} onExpire={examSubmit} />
       <div className="p-sub" style={{ marginTop: 10 }}>{e.list.length} exercices · {total} points au total · rédige sur ta copie, numérote bien.</div>
       {e.list.map(x => (
-        <div key={x.n} className="exq"><div className="exq-h"><span>Exercice {x.n} · {x.sub}</span><span className="pts">/{x.pts}</span></div><div className="exq-q">{x.q}</div></div>
+        <div key={x.n} className="exq"><div className="exq-h"><span>Exercice {x.n} · {x.sub}</span><span className="pts">/{x.pts}</span></div><div className="exq-q"><MathText>{x.q}</MathText></div></div>
       ))}
       <button className="p-btn ink" style={{ marginTop: 16 }} onClick={() => { if (confirm("Rendre la copie et voir la correction ?")) examSubmit(); }}>✅ Rendre la copie &amp; voir la correction</button>
       <button className="p-btn" style={{ marginTop: 8, background: "#f0f0f0", color: "var(--pencil)" }} onClick={() => { if (confirm("Abandonner ce contrôle ? Il ne sera pas enregistré.")) endExam(); }}>Abandonner</button>
@@ -72,8 +73,8 @@ function Review({ e }) {
         return (
           <div key={i} className="exq">
             <div className="exq-h"><span>Exercice {x.n} · {x.sub}</span><span className="pts">/{x.pts}</span></div>
-            <div className="exq-q">{x.q}</div>
-            <div className="exq-sol"><b>Correction.</b>{"\n" + x.sol}</div>
+            <div className="exq-q"><MathText>{x.q}</MathText></div>
+            <div className="exq-sol"><b>Correction.</b>{"\n"}<MathText>{x.sol}</MathText></div>
             {e.saved
               ? <div className="exq-grade"><span className="g-lab">Note : <b>{c}/{x.pts}</b></span></div>
               : <div className="exq-grade"><span className="g-lab">Tes points :</span><div className="g-pts">{Array.from({ length: x.pts + 1 }, (_, p) => <button key={p} className={c === p ? "sel" : ""} onClick={() => examSetGrade(i, p)}>{p}</button>)}</div></div>}
