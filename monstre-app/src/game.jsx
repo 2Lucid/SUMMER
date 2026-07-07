@@ -7,6 +7,7 @@ import { DOMAINS, genDrill } from "./lib/drill.js";
 import { buildExam } from "./lib/exam.js";
 import { FLASH, BOX_GAP } from "./lib/flash.js";
 import * as W from "./lib/work.js";
+import * as STU from "./lib/study.js";
 
 const Ctx = createContext(null);
 export const useGame = () => useContext(Ctx);
@@ -75,6 +76,16 @@ export function GameProvider({ children }) {
   const openModal = questId => setUi(u => ({ ...u, modal: { questId }, selAction: null, fear: 5 }));
   const closeModal = () => setUi(u => ({ ...u, modal: null }));
   const setCouple = v => { const cur = getS(); setS({ ...cur, couple: !!v }); fx.toast(v ? "C'est noté 💞 En couple." : "C'est noté 🔥 Célibataire — à toi de jouer."); };
+
+  /* --- Chrono de travail prépa (global, sur toutes les pages) --- */
+  const STUDY_CAP = 12 * 3600000;  // garde-fou : chrono oublié → max 12 h créditées
+  const studyStart = () => { const cur = getS(); const st = cur.study || { running: null, sessions: [] }; if (st.running) return; setS({ ...cur, study: { ...st, running: { startedAt: Date.now() } } }); fx.toast("⏱️ Chrono prépa lancé — au boulot 👊"); };
+  const studyStop = () => { const cur = getS(); const st = cur.study || { running: null, sessions: [] }; if (!st.running) return;
+    let ms = Math.max(0, Date.now() - st.running.startedAt); const capped = ms > STUDY_CAP; if (capped) ms = STUDY_CAP;
+    if (ms < 30000) { setS({ ...cur, study: { ...st, running: null } }); fx.toast("Trop court pour compter (min 30 s) ⏳"); return; }
+    const sess = { id: uid(), ms, dk: todayKey(), ts: Date.now() };
+    setS({ ...cur, study: { running: null, sessions: [...(st.sessions || []), sess] } });
+    fx.toast("✅ +" + STU.human(ms) + " de prépa enregistrées 📚" + (capped ? " (plafonné à 12 h)" : "")); };
 
   /* --- Prépa (jour / sommeil) --- */
   const toggleDay = id => { const cur = getS(); const tk = todayKey(); const ch = cur.days[tk] || {}; setS({ ...cur, days: { ...cur.days, [tk]: { ...ch, [id]: !ch[id] } } }); };
@@ -237,7 +248,7 @@ export function GameProvider({ children }) {
   /* --- données --- */
   const doWipe = () => { if (confirm("Tout effacer : Cœur + Prépa ?") && confirm("Sûr de sûr ? Irréversible.")) { wipe(); fx.toast("Nouvelle partie. Deviens un monstre. 👹"); } };
 
-  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, toggleDay, doTodo, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
+  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
     logSession, startTimer, pauseTimer, resumeTimer, stopTimer, skipBreak, reconcileTimer, addProspect, advProspect, moveProspect, setProspectPrice, quickSale, removeProspect, shipFeature, removeShip, addMilestone, editMilestone, removeMilestone, moveMilestone, resetRoadmap, openProChest, doWipe };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -892,3 +892,33 @@ button.share-ev:hover .ti{text-decoration:underline}
 .pro-streak{display:inline-flex;align-items:center;gap:5px;font-family:var(--body);font-weight:700;font-size:12.5px;color:var(--orange);background:rgba(255,142,60,.12);border:1px solid rgba(255,142,60,.4);padding:4px 11px;border-radius:99px}
 .pro-badge{font-size:10.5px;font-weight:800;letter-spacing:.03em;color:var(--gold);background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.4);padding:2px 8px;border-radius:99px;margin-left:6px}
 .pro-stale{color:var(--red)!important}
+
+/* ===== Chrono de travail prépa : bouton flottant global + carte accueil ===== */
+.study-fab{position:fixed;right:14px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:45}
+@media(min-width:980px){.study-fab{bottom:22px;right:22px}}
+.study-fab .stf-main{display:inline-flex;align-items:center;gap:9px;font-family:var(--disp);font-weight:800;cursor:pointer;border:none;border-radius:99px;padding:12px 18px;color:#0d0719;background:linear-gradient(90deg,var(--cyan),#7ef0e4);box-shadow:0 12px 30px -10px rgba(53,224,208,.7);transition:transform .1s ease,box-shadow .2s}
+.study-fab .stf-main:hover{transform:translateY(-2px)}
+.study-fab .stf-main:active{transform:translateY(0)}
+.study-fab .stf-ic{font-size:18px}
+.study-fab .stf-lbl{font-size:14.5px;letter-spacing:.02em}
+.study-fab .stf-stop{font-size:15px;opacity:.9}
+.study-fab .stf-clock{font-size:16px;font-variant-numeric:tabular-nums;letter-spacing:.04em;min-width:62px;text-align:center}
+.study-fab.on .stf-main{background:linear-gradient(90deg,#ff5470,#ff8e3c);box-shadow:0 12px 34px -8px rgba(255,84,112,.75);color:#fff;padding:11px 16px}
+.study-fab .stf-dot{width:10px;height:10px;border-radius:50%;background:#fff;animation:stf-pulse 1.4s ease-out infinite}
+@keyframes stf-pulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 9px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+body.paper .study-fab .stf-main{color:#0d0719}
+body.paper .study-fab.on .stf-main{color:#fff}
+
+.study-home{display:flex;align-items:center;gap:16px;margin-top:14px;padding:15px 18px;border-radius:var(--r);border:1px solid rgba(53,224,208,.3);background:linear-gradient(135deg,rgba(53,224,208,.16),rgba(38,71,208,.12))}
+.study-home .sh-ic{font-size:30px;flex:none;line-height:1}
+.study-home .sh-main{flex:none}
+.study-home .sh-big{font-family:var(--disp);font-weight:900;font-size:28px;line-height:1;color:var(--cyan)}
+.study-home .sh-lbl{font-size:11.5px;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.study-home .sh-lbl .sh-live{color:var(--cyan);font-weight:700}
+.study-home .sh-side{margin-left:auto;display:flex;gap:22px;text-align:right;flex-wrap:wrap;justify-content:flex-end}
+.study-home .sh-side>div{display:flex;flex-direction:column}
+.study-home .sh-side b{font-family:var(--disp);font-weight:800;font-size:16px;color:var(--ink)}
+.study-home .sh-side span{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+@media(max-width:560px){.study-home{flex-wrap:wrap;gap:12px}.study-home .sh-side{margin-left:0;width:100%;justify-content:space-between;gap:10px}}
+body.paper .study-home{background:linear-gradient(135deg,rgba(53,180,208,.12),rgba(96,150,220,.1));border-color:rgba(96,150,220,.35)}
+body.paper .study-home .sh-side b{color:var(--pink-ink)}

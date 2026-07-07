@@ -6,6 +6,7 @@ import { RENTREE, phaseOf, PHASE_META, rampOf, DEADLINES, checklistPct, studyStr
 import { FLASH, rankOf } from "../lib/flash.js";
 import { LEVELS, levelIndex, mission, fearEntries } from "../lib/coeur.js";
 import { deposits7, WEEK_GOAL, coupleMicroOfDay, lovemapOfDay } from "../lib/couple.js";
+import * as STU from "../lib/study.js";
 
 const COEUR_TYPES = [["message", "📨 Messages"], ["convo", "💬 Relances"], ["proposer", "🎯 Propositions"], ["date", "🏖️ Dates"], ["couple", "💘 Couple"], ["rateau", "🥀 Râteaux"], ["irl", "⚡ Courage IRL"]];
 const COEUR_COLS = { message: "var(--cyan)", convo: "var(--cyan)", proposer: "var(--orange)", date: "var(--gold)", couple: "var(--pink)", rateau: "var(--red)", irl: "var(--cyan)" };
@@ -29,6 +30,8 @@ export default function Home() {
   const isCouple = S.couple === true;
   const dep = deposits7(S); const tank = Math.min(100, Math.round(dep / WEEK_GOAL * 100));
   const coupleDone = (S.coeurDaily[tk] || 0) > 0; const coupleMicro = coupleMicroOfDay(tk);
+  const studyTotal = STU.totalMs(S), studyToday = STU.dayMs(S, tk), studyWeek = STU.weekMs(S, tk);
+  const studyRunning = STU.isRunning(S);
 
   const boxes = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
   FLASH.forEach(c => { const s = S.flash[c.id]; if (!s) boxes[0]++; else boxes[s.box || 1]++; });
@@ -59,6 +62,19 @@ export default function Home() {
         <KPI cls="cyan" v={studyStreak(S) + " 🔥"} l="streak prépa" s={pct + "% du jour fait"} />
         <KPI cls="pink" v={S.streak + " 🔥"} l="streak cœur" s={"record " + S.best} />
         <KPI cls="orange" v={S.xp + (S.skills.xp || 0)} l="XP cumulé" s={"📓 " + (S.skills.xp || 0) + " · ❤️ " + S.xp} />
+      </div>
+
+      <div className="study-home">
+        <div className="sh-ic">⏱️</div>
+        <div className="sh-main">
+          <div className="sh-big">{STU.human(studyTotal)}</div>
+          <div className="sh-lbl">travaillées pour la prépa{studyRunning && <span className="sh-live"> · chrono en cours</span>}</div>
+        </div>
+        <div className="sh-side">
+          <div><b>{STU.human(studyToday)}</b><span>aujourd'hui</span></div>
+          <div><b>{STU.human(studyWeek)}</b><span>7 jours</span></div>
+          <div><b>{STU.sessionCount(S)}</b><span>sessions</span></div>
+        </div>
       </div>
 
       <div className="coeur-row">

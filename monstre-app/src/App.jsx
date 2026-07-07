@@ -16,6 +16,7 @@ import Login from "./components/Login.jsx";
 import Modal from "./components/Modal.jsx";
 import Settings from "./components/Settings.jsx";
 import NightGuard from "./components/NightGuard.jsx";
+import StudyTimer from "./components/StudyTimer.jsx";
 import Fx from "./components/Fx.jsx";
 
 function Appbar({ onSettings, pdark, onToggleDark }) {
@@ -96,6 +97,7 @@ export default function App() {
                 : <Prepa />}
         <WorldNav />
       </div>
+      <StudyTimer />
       <Modal />
       {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
       <NightGuard />
