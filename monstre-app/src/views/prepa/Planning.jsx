@@ -1,6 +1,6 @@
 import { useGame } from "../../game.jsx";
 import { todayKey, addDays, fromDk, frDate, WD, MO } from "../../lib/util.js";
-import { phaseOf, PHASE_META, rampOf, buildDayPlan, bookOf, DEADLINES } from "../../lib/config.js";
+import { phaseOf, PHASE_META, rampOf, buildDayPlan, bookOf, DEADLINES, DEADLINE_XP } from "../../lib/config.js";
 
 const PH = [
   ["7 – 12 juil.", "RESET", "Sommeil, inscription Cahier de Prépa, démarrage doux, Ion.", "var(--bic)"],
@@ -19,7 +19,8 @@ const RULES = [
 ];
 
 function Overview() {
-  const tk = todayKey();
+  const { S, markDeadline } = useGame();
+  const done = S.deadlinesDone || {};
   return (
     <div style={{ marginTop: 6 }}>
       {PH.map(([d, n, t, col]) => (
@@ -28,8 +29,12 @@ function Overview() {
           <div style={{ fontSize: 14, marginTop: 2, lineHeight: 1.35 }}>{t}</div>
         </div>
       ))}
-      <div className="p-card"><div className="p-card-title" style={{ marginBottom: 6 }}>Deadlines <span className="pen p-red" style={{ fontSize: 17 }}>— rien en retard n'est compté</span></div>
-        {DEADLINES.map(d => <div key={d.dk} className="p-row" style={{ opacity: d.dk < tk ? 0.45 : 1 }}><span>{d.icon}</span><span className="p-flex">{d.label}</span><span style={{ fontWeight: 800, color: "var(--penred)", whiteSpace: "nowrap" }}>{fromDk(d.dk).getDate()} {MO[fromDk(d.dk).getMonth()]}</span></div>)}
+      <div className="p-card"><div className="p-card-title" style={{ marginBottom: 6 }}>Devoirs à rendre <span className="pen p-red" style={{ fontSize: 16 }}>— coche = +{DEADLINE_XP} XP</span></div>
+        {DEADLINES.map(d => { const dn = !!done[d.dk]; return (
+          <button key={d.dk} className={"p-item" + (dn ? " done" : "")} onClick={() => markDeadline(d.dk)}>
+            <span className={"p-check" + (dn ? " on" : "")}>{dn ? "✓" : ""}</span>
+            <span className="lab">{d.icon} {d.label} <b style={{ color: "var(--penred)" }}>· {fromDk(d.dk).getDate()} {MO[fromDk(d.dk).getMonth()]}{dn ? " · rendu ✓" : ""}</b></span>
+          </button>); })}
       </div>
       <div className="p-card"><div className="p-card-title" style={{ marginBottom: 6 }}>Plan de lecture — « Les arcanes de la création »</div>
         {READ.map(([d, b, t]) => <div key={b} style={{ padding: "7px 0", borderBottom: "1px solid var(--pline)" }}><div style={{ display: "flex", justifyContent: "space-between" }}><b>{b}</b><span style={{ fontSize: 12, fontWeight: 600, color: "var(--pencil)" }}>{d}</span></div><div style={{ fontSize: 12, color: "var(--pencil)" }}>{t}</div></div>)}
@@ -43,7 +48,7 @@ function Overview() {
 }
 
 export default function Planning() {
-  const { ui, patch } = useGame();
+  const { ui, patch, genPrepaPlan } = useGame();
   const tk = todayKey(); const sel = (ui.planDay && ui.planDay >= tk) ? ui.planDay : tk;
   const ph = PHASE_META[phaseOf(sel)], r = rampOf(sel), plan = buildDayPlan(sel);
   const dueThatDay = DEADLINES.filter(d => d.dk === sel);
@@ -86,6 +91,13 @@ export default function Planning() {
             <div style={{ fontSize: 13.5, lineHeight: 1.45 }}>Chaque soir avant de dormir : <b>{bookOf(sel)}</b>. Créneau idéal — lumière basse, zéro écran, ça enclenche le sommeil. 30 min suffisent les soirs chargés, vise 40 quand tu peux.</div>
           </div>
         </div>
+      </div>
+      <div className="plan-gen">
+        <div className="plan-gen-btns">
+          <button className="p-btn gen" onClick={() => genPrepaPlan("day", sel)}>🗓️ Ajouter ce jour au calendrier</button>
+          <button className="p-btn gen" onClick={() => genPrepaPlan("week", sel)}>📅 Générer la semaine</button>
+        </div>
+        <div className="plan-gen-note">Blocs créés en <b>privé 🔒</b> dans ton planning perso — jamais visibles par les autres joueurs. Ils s'affichent déjà en fond du calendrier ; le bouton les rend modifiables. La <b>lecture du soir</b> est toujours incluse.</div>
       </div>
       <button className="p-btn" style={{ marginTop: 16, background: "#fff", border: "1.5px solid var(--pline)", color: "var(--pink-ink)" }} onClick={() => patch(u => ({ planOverview: !u.planOverview }))}>
         {ui.planOverview ? "▾ Masquer la vue d'ensemble de l'été" : "🗺️ Vue d'ensemble de l'été — phases, lectures, deadlines"}

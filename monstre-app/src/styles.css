@@ -922,3 +922,17 @@ body.paper .study-fab.on .stf-main{color:#fff}
 @media(max-width:560px){.study-home{flex-wrap:wrap;gap:12px}.study-home .sh-side{margin-left:0;width:100%;justify-content:space-between;gap:10px}}
 body.paper .study-home{background:linear-gradient(135deg,rgba(53,180,208,.12),rgba(96,150,220,.1));border-color:rgba(96,150,220,.35)}
 body.paper .study-home .sh-side b{color:var(--pink-ink)}
+
+/* ===== Blocs prépa dans le calendrier + toggle + génération ===== */
+.cal-prepa-toggle{background:rgba(143,123,255,.14);color:var(--muted);border:1px solid rgba(143,123,255,.3);font-family:var(--body);font-weight:700;font-size:12.5px;padding:8px 12px;border-radius:11px;cursor:pointer;white-space:nowrap}
+.cal-prepa-toggle.on{background:rgba(143,123,255,.22);color:var(--ink);border-color:rgba(143,123,255,.55)}
+.cal-ev.prepa{cursor:pointer;box-shadow:none;z-index:1;opacity:.92}
+.cal-ev.prepa .et{color:var(--ink);font-weight:600}
+.cal-ev.prepa .eh{color:var(--muted)}
+
+.plan-gen{margin-top:16px;background:#fff;border:1.5px solid var(--pline);border-radius:14px;padding:12px}
+.plan-gen-btns{display:flex;gap:8px;flex-wrap:wrap}
+.plan-gen-btns .p-btn.gen{flex:1;min-width:150px;background:var(--bic);width:auto;font-size:14px;padding:11px}
+.plan-gen-btns .p-btn.gen:active{transform:translateY(1px)}
+.plan-gen-note{font-size:12px;color:var(--pencil);margin-top:9px;line-height:1.45}
+.plan-gen-note b{color:var(--pink-ink)}

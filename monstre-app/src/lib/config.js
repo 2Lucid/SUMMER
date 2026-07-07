@@ -44,6 +44,42 @@ const BOOKS = [
 export const bookOf = dk => (BOOKS.find(b => dk <= b.to) || BOOKS[BOOKS.length - 1]).name;
 export const SCI_BY_DAY = { 1: "Physique", 2: "Chimie (devoir en cours)", 3: "SI / Info", 4: "Physique", 5: "Chimie (devoir en cours)", 6: "Refais tes ratés de la semaine" };
 
+/* ── XP prépa (alimente skills.xp → rang « Étoile ») ──────────────────────── */
+export const CHECK_XP    = 5;   // item de la checklist du jour coché (−5 si décoché : non exploitable)
+export const DEADLINE_XP = 40;  // devoir/DM rendu
+
+/* ── BLOCS DE TRAVAIL PRÉPA (créneaux horaires) ───────────────────────────────
+ * Version « posée dans le calendrier » de la journée type : RESET = matin +
+ * anglais le soir, puis on monte en charge. Sert au fond auto du calendrier ET
+ * au bouton « générer mon planning ». Toujours PRIVÉ (jamais partagé). */
+export const PREPA_COLOR = "#8f7bff";
+export function prepaBlocks(dk) {
+  const ph = phaseOf(dk), wd = fromDk(dk).getDay(), book = bookOf(dk);
+  const read = { start: "21:30", end: "22:10", k: "📖", l: "Lecture — " + book, s: "30–40 min, lumière basse, zéro écran" };
+  if (ph === "rentree") return [];
+  if (wd === 0) return [read];                       // dimanche = coupure, juste la lecture du soir
+  if (ph === "reset") return [
+    { start: "10:00", end: "10:45", k: "⚡", l: "Drill automatismes", s: "calcul mental chronométré" },
+    { start: "10:45", end: "11:45", k: "📐", l: "Maths — cahier de calcul / DM", s: "cherche avant le corrigé" },
+    { start: "18:00", end: "18:30", k: "🇬🇧", l: "Anglais — logbook / thème", s: "le soir, léger" },
+    read,
+  ];
+  if (ph === "croisiere") return [
+    { start: "09:00", end: "09:45", k: "📐", l: "Maths — drill + cahier de calcul", s: "" },
+    { start: "10:00", end: "10:45", k: "🔬", l: SCI_BY_DAY[wd], s: "" },
+    { start: "11:00", end: "11:30", k: "🇬🇧", l: "Anglais — logbook / thème / WSE", s: "" },
+    { start: "18:00", end: "18:20", k: "🧠", l: "Par cœur — 10 flashcards", s: "" },
+    read,
+  ];
+  return [                                            // intense
+    { start: "09:00", end: "12:00", k: "📐", l: "BLOC 1 — Maths", s: "DM, cahier de calcul, par cœur" },
+    { start: "14:30", end: "16:30", k: "🔬", l: "BLOC 2 — " + SCI_BY_DAY[wd], s: "physique / chimie / SI-info" },
+    { start: "16:30", end: "17:00", k: "⚡", l: "Drill — 2 séries", s: "" },
+    { start: "17:00", end: "17:45", k: "🌍", l: "Anglais + espagnol léger", s: "" },
+    read,
+  ];
+}
+
 export function buildChecklist(dk) {
   const ph = phaseOf(dk), r = rampOf(dk), wd = fromDk(dk).getDay();
   if (ph === "rentree") return [{ id: "go", label: "Sois un monstre. Bonne rentrée. 🎒" }];

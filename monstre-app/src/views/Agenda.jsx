@@ -3,7 +3,7 @@ import { useGame } from "../game.jsx";
 import { usePeersAuto, myId } from "../store.js";
 import { toast } from "../fx.js";
 import { todayKey, fromDk, addDays, dkOf, uid, pad, WD, MO, frDate } from "../lib/util.js";
-import { DEADLINES } from "../lib/config.js";
+import { DEADLINES, prepaBlocks, PREPA_COLOR } from "../lib/config.js";
 import { CAL_START, CAL_END, CAL_HPX, CAL_TOTAL, MOF, EV_TYPES, DEF_TYPE, evTypeOf, evCoversDay, evIsRange, evDayCount, hm2min, min2hm, capEnd, calMonday, calWeekDays } from "../lib/agenda.js";
 
 export default function Agenda() {
@@ -16,17 +16,22 @@ export default function Agenda() {
   const [peek, setPeek] = useState(null);
   const tk = todayKey();
   const shareOn = ui.sharePlan !== false;
+  const prepaOn = ui.calPrepa !== false;
 
   /* --- données --- */
   const evSort = (a, b) => (a.allDay ? -1 : 0) - (b.allDay ? -1 : 0) || hm2min(a.start) - hm2min(b.start);
   const evOfDay = dk => S.events.filter(e => evCoversDay(e, dk)).slice().sort(evSort);
   const dlOf = dk => DEADLINES.filter(d => d.dk === dk);
 
-  /* --- événements des autres joueurs, intégrés au grand planning en lecture seule --- */
+  /* --- blocs prépa auto (fond du calendrier, privés, lecture seule) : masqués un jour déjà « matérialisé » en vrais événements --- */
+  const hasGen = dk => S.events.some(e => e.gen === "prepa" && e.date === dk);
+  const prepaOfDay = dk => (prepaOn && !hasGen(dk)) ? prepaBlocks(dk).map(b => ({ ...b, title: b.k + " " + b.l, color: PREPA_COLOR, note: b.s, date: dk, allDay: false })) : [];
+
+  /* --- événements des autres joueurs, intégrés au grand planning en lecture seule (les créneaux PRIVÉS ne sont jamais partagés) --- */
   const peerEvs = shareOn ? peers.filter(p => p.id !== me).flatMap(p => {
     const d = p.d || {}, pr = d.profile || {};
     const owner = { id: p.id, name: pr.name || p.id, avatar: pr.avatar || "⭐" };
-    return (d.events || []).filter(Boolean).map(e => ({ ...e, _owner: owner }));
+    return (d.events || []).filter(e => e && !e.private).map(e => ({ ...e, _owner: owner }));
   }) : [];
   const peerOfDay = dk => peerEvs.filter(e => evCoversDay(e, dk)).slice().sort(evSort);
 
@@ -61,6 +66,8 @@ export default function Agenda() {
     const ty = evTypeOf(e);
     const rec = { id: e.id || uid(), title: t.slice(0, 80), date: e.date, allDay: !!e.allDay, start, end, type: ty.id, color: ty.color, note: (e.note || "").slice(0, 500) };
     if (e.allDay && e.endDate && e.endDate > e.date) rec.endDate = e.endDate;
+    if (e.private) rec.private = true;
+    if (e.gen) rec.gen = e.gen;
     const isNew = !e.id; saveEvent(rec); setEditor(null);
     const nd = evDayCount(rec);
     toast(isNew ? (nd > 1 ? `Plage ajoutée 🏖️ (${nd} jours)` : "Événement ajouté 🗓️") : "Événement mis à jour ✓");
@@ -154,9 +161,14 @@ export default function Agenda() {
             {days.map(dk => (
               <div key={dk} className={"cal-col" + (dk === tk ? " today" : "")} data-calcol={dk} style={{ height: CAL_TOTAL, "--hpx": CAL_HPX + "px" }}
                 onClick={e => { if (e.target.closest(".cal-ev")) return; const r = e.currentTarget.getBoundingClientRect(); newEvent(dk, CAL_START * 60 + (e.clientY - r.top) / CAL_HPX * 60); }}>
+                {prepaOfDay(dk).filter(e => !e.allDay).map((e, i) => { const st = evStyle(e); return (
+                  <div key={"pr" + i} className="cal-ev prepa" style={{ ...st, background: peerBg(e.color), borderLeft: "3px dashed " + e.color }} onClick={ev => { ev.stopPropagation(); toast("📓 Bloc prépa perso — coche-le dans l'onglet Prépa"); }}>
+                    <div className="et">{e.title}</div>
+                    {st.height > 28 && <div className="eh">{e.start}–{e.end}</div>}
+                  </div>); })}
                 {evOfDay(dk).filter(e => !e.allDay).map(e => (
                   <div key={e.id} className="cal-ev" style={evStyle(e)} onPointerDown={ev => onEvPointerDown(ev, e)}>
-                    <div className="et">{e.title}</div>
+                    <div className="et">{e.private && "🔒 "}{e.title}</div>
                     {evStyle(e).height > 28 && <div className="eh">{e.start}–{e.end}</div>}
                   </div>
                 ))}
@@ -193,6 +205,7 @@ export default function Agenda() {
           ))}
         </div>
         <button className="cal-add" onClick={() => newEvent(date)}>+ Événement</button>
+        <button className={"cal-prepa-toggle" + (prepaOn ? " on" : "")} onClick={() => patch({ calPrepa: ui.calPrepa === false })} title="Afficher/masquer tes blocs de travail prépa (privés)">📓 Prépa {prepaOn ? "✓" : ""}</button>
       </div>
 
       <div className="cal-panel">
@@ -200,7 +213,7 @@ export default function Agenda() {
       </div>
 
       <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 10, lineHeight: 1.5 }}>
-        Touche un créneau vide pour créer · glisse un bloc pour le déplacer · touche-le pour l'éditer. Tes 📌 deadlines prépa et les créneaux des autres joueurs (bordure en pointillés) apparaissent en lecture seule.
+        Touche un créneau vide pour créer · glisse un bloc pour le déplacer · touche-le pour l'éditer. Tes 📓 blocs prépa (privés, hachurés) et les créneaux des autres joueurs (pointillés) apparaissent en lecture seule. Un événement 🔒 perso n'est jamais partagé.
       </div>
 
       <SharedPlanning peers={peers} me={me} view={view} date={date} on={shareOn} onToggle={() => patch({ sharePlan: ui.sharePlan === false })} onPeek={setPeek} />
@@ -239,7 +252,7 @@ function SharedPlanning({ peers, me, view, date, on, onToggle, onPeek }) {
   const inRange = e => days.some(dk => evCoversDay(e, dk));
   const others = peers.filter(p => p.id !== me).map(p => {
     const d = p.d || {}, pr = d.profile || {};
-    const evs = (d.events || []).filter(e => e && inRange(e)).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || (a.allDay ? -1 : 0) - (b.allDay ? -1 : 0) || hm2min(a.start) - hm2min(b.start));
+    const evs = (d.events || []).filter(e => e && !e.private && inRange(e)).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0) || (a.allDay ? -1 : 0) - (b.allDay ? -1 : 0) || hm2min(a.start) - hm2min(b.start));
     return { id: p.id, name: pr.name || p.id, avatar: pr.avatar || "⭐", evs };
   }).filter(o => o.evs.length);
   const loading = peers.length === 0;
@@ -303,6 +316,9 @@ function EventEditor({ e, set, onSave, onDelete, onClose }) {
         </div>
         <div className="cal-ad-row" onClick={() => upd(e.endDate ? { endDate: undefined } : { endDate: e.date, allDay: true })}>
           <input type="checkbox" checked={!!e.endDate} readOnly /><span>🏖️ Plage de plusieurs jours (vacances, stage…)</span>
+        </div>
+        <div className="cal-ad-row" onClick={() => upd({ private: !e.private })}>
+          <input type="checkbox" checked={!!e.private} readOnly /><span>🔒 Perso — non partagé avec les autres joueurs</span>
         </div>
         {e.endDate ? (
           <div className="cal-2">

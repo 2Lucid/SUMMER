@@ -8,12 +8,13 @@ import { buildExam } from "./lib/exam.js";
 import { FLASH, BOX_GAP, rankOf } from "./lib/flash.js";
 import * as W from "./lib/work.js";
 import * as STU from "./lib/study.js";
+import { prepaBlocks, PREPA_COLOR, CHECK_XP, DEADLINE_XP } from "./lib/config.js";
 
 const Ctx = createContext(null);
 export const useGame = () => useContext(Ctx);
 const PREPA_TABS = ["today", "planning", "exam", "drill", "flash", "brain", "sleep"];
 const PRO_TABS = ["asso", "lucid", "work"];
-const initUi = () => ({ world: "home", tab: "today", menuFor: null, modal: null, selAction: null, fear: 5, selEmoji: EMOJIS[0], sess: null, exam: null, examCfg: { subject: "mixte", minutes: 60 }, flash: null, flashSubj: "all", planDay: null, planOverview: false, calView: "week", calDate: todayKey(), sharePlan: true });
+const initUi = () => ({ world: "home", tab: "today", menuFor: null, modal: null, selAction: null, fear: 5, selEmoji: EMOJIS[0], sess: null, exam: null, examCfg: { subject: "mixte", minutes: 60 }, flash: null, flashSubj: "all", planDay: null, planOverview: false, calView: "week", calDate: todayKey(), sharePlan: true, calPrepa: true });
 
 export function GameProvider({ children }) {
   const S = useS();
@@ -94,8 +95,28 @@ export function GameProvider({ children }) {
     const newRank = rankOf(skills.xp).name; if (newRank !== prevRank && xpGain > 0) { fx.confetti(60); setTimeout(() => fx.toast("⭐ Nouveau rang prépa : " + newRank), 1700); } };
 
   /* --- Prépa (jour / sommeil) --- */
-  const toggleDay = id => { const cur = getS(); const tk = todayKey(); const ch = cur.days[tk] || {}; setS({ ...cur, days: { ...cur.days, [tk]: { ...ch, [id]: !ch[id] } } }); };
-  const doTodo = id => { const cur = getS(); setS({ ...cur, todos: { ...cur.todos, [id]: true } }); };
+  // Cocher un item de la checklist = +5 XP (dopamine) ; décocher = −5 (net non exploitable).
+  const toggleDay = id => { const cur = getS(); const tk = todayKey(); const ch = cur.days[tk] || {}; const nx = !ch[id];
+    const skills = { ...cur.skills, xp: Math.max(0, (cur.skills.xp || 0) + (nx ? CHECK_XP : -CHECK_XP)) };
+    setS({ ...cur, days: { ...cur.days, [tk]: { ...ch, [id]: nx } }, skills });
+    if (nx) fx.toast("✨ +" + CHECK_XP + " XP"); };
+  const doTodo = id => { const cur = getS(); if (cur.todos[id]) return; setS({ ...cur, todos: { ...cur.todos, [id]: true } }); fx.toast("✅ Coché — un truc de moins sur la liste"); };
+  // Devoir/DM rendu (cochable) = +40 XP + confetti ; recoché = −40.
+  const markDeadline = dk => { const cur = getS(); const done = cur.deadlinesDone || {}; const nx = !done[dk];
+    const prevRank = rankOf(cur.skills.xp || 0).name;
+    const skills = { ...cur.skills, xp: Math.max(0, (cur.skills.xp || 0) + (nx ? DEADLINE_XP : -DEADLINE_XP)) };
+    setS({ ...cur, deadlinesDone: { ...done, [dk]: nx }, skills });
+    if (nx) { fx.confetti(50); fx.toast("💪 Devoir rendu · +" + DEADLINE_XP + " XP prépa"); const nr = rankOf(skills.xp).name; if (nr !== prevRank) setTimeout(() => fx.toast("⭐ Nouveau rang prépa : " + nr), 1600); }
+    else fx.toast("Décoché · −" + DEADLINE_XP + " XP"); };
+  // Génère les blocs prépa (privés) dans le calendrier. scope: "day" | "week". Remplace les blocs déjà générés sur la période.
+  const genPrepaPlan = (scope = "day", startDk) => { const cur = getS(); const start = startDk || todayKey();
+    const days = scope === "week" ? Array.from({ length: 7 }, (_, i) => addDays(start, i)) : [start];
+    const daySet = new Set(days);
+    const kept = (cur.events || []).filter(e => !(e.gen === "prepa" && daySet.has(e.date)));
+    const fresh = [];
+    days.forEach(dk => prepaBlocks(dk).forEach(b => fresh.push({ id: uid(), title: b.k + " " + b.l, date: dk, allDay: false, start: b.start, end: b.end, type: "travail", color: PREPA_COLOR, note: b.s || "", private: true, gen: "prepa" })));
+    setS({ ...cur, events: [...kept, ...fresh] });
+    fx.toast("🗓️ Prépa ajoutée à ton calendrier — privée 🔒 (" + fresh.length + " bloc" + (fresh.length > 1 ? "s" : "") + ")"); };
   const upSleep = (k, v) => { const cur = getS(); const tk = todayKey(); const rec = cur.sleep[tk] || {}; setS({ ...cur, sleep: { ...cur.sleep, [tk]: { ...rec, [k]: v } } }); };
 
   /* --- Drill (100% QCM) --- */
@@ -254,7 +275,7 @@ export function GameProvider({ children }) {
   /* --- données --- */
   const doWipe = () => { if (confirm("Tout effacer : Cœur + Prépa ?") && confirm("Sûr de sûr ? Irréversible.")) { wipe(); fx.toast("Nouvelle partie. Deviens un monstre. 👹"); } };
 
-  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
+  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
     logSession, startTimer, pauseTimer, resumeTimer, stopTimer, skipBreak, reconcileTimer, addProspect, advProspect, moveProspect, setProspectPrice, quickSale, removeProspect, shipFeature, removeShip, addMilestone, editMilestone, removeMilestone, moveMilestone, resetRoadmap, openProChest, doWipe };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

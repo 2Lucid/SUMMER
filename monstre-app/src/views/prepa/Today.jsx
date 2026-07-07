@@ -1,12 +1,13 @@
 import { useGame } from "../../game.jsx";
-import { todayKey, daysTo, frDate } from "../../lib/util.js";
-import { buildChecklist, rampOf, DEADLINES, TODOS } from "../../lib/config.js";
+import { todayKey, daysTo, addDays, frDate } from "../../lib/util.js";
+import { buildChecklist, rampOf, DEADLINES, TODOS, DEADLINE_XP } from "../../lib/config.js";
 
 export default function Today() {
-  const { S, toggleDay, doTodo } = useGame();
+  const { S, toggleDay, doTodo, markDeadline } = useGame();
   const tk = todayKey(); const list = buildChecklist(tk); const ch = S.days[tk] || {};
   const nDone = list.filter(it => ch[it.id]).length; const pct = Math.round(nDone / list.length * 100); const r = rampOf(tk);
-  const next = DEADLINES.filter(d => d.dk >= tk).slice(0, 3); const openTodos = TODOS.filter(t => !S.todos[t.id]);
+  const done = S.deadlinesDone || {};
+  const next = DEADLINES.filter(d => d.dk >= addDays(tk, -4)).slice(0, 4); const openTodos = TODOS.filter(t => !S.todos[t.id]);
 
   return (
     <>
@@ -15,8 +16,16 @@ export default function Today() {
       <div className="plan-cols">
         <div>
           {next.length > 0 && (
-            <div className="p-card red"><div className="p-card-title" style={{ marginBottom: 6 }}>À rendre bientôt</div>
-              {next.map(d => { const n = daysTo(tk, d.dk); return <div key={d.dk} className="p-row"><span>{d.icon}</span><span className="p-flex">{d.label}</span><span className="pen p-red" style={{ fontSize: 19, whiteSpace: "nowrap" }}>{n === 0 ? "aujourd'hui !" : "J−" + n}</span></div>; })}
+            <div className="p-card red">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                <span className="p-card-title">Devoirs à rendre</span>
+                <span className="pen p-red" style={{ fontSize: 15 }}>coche = +{DEADLINE_XP} XP</span>
+              </div>
+              {next.map(d => { const n = daysTo(tk, d.dk); const dn = !!done[d.dk]; return (
+                <button key={d.dk} className={"p-item" + (dn ? " done" : "")} onClick={() => markDeadline(d.dk)}>
+                  <span className={"p-check" + (dn ? " on" : "")}>{dn ? "✓" : ""}</span>
+                  <span className="lab">{d.icon} {d.label} <b className="p-red">{dn ? "· rendu ✓" : n === 0 ? "· aujourd'hui !" : n < 0 ? "· en retard" : "· J−" + n}</b></span>
+                </button>); })}
             </div>
           )}
           <div className="p-card ink">
