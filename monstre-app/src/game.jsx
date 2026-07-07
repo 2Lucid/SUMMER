@@ -94,7 +94,8 @@ export function GameProvider({ children }) {
     if (ms / 60000 >= 45 && xpGain > 0) fx.confetti(40);
     const newRank = rankOf(skills.xp).name; if (newRank !== prevRank && xpGain > 0) { fx.confetti(60); setTimeout(() => fx.toast("⭐ Nouveau rang prépa : " + newRank), 1700); } };
 
-  /* --- Calcul mental : on colle le message de partage de l'app externe, on en extrait score+seed+lien --- */
+  /* --- Calcul mental : le message de partage ne donne QUE score+seed+lien ; le reste (✓/✗/temps) se saisit à la main depuis la carte --- */
+  const num = v => { if (v === "" || v == null) return null; const n = parseFloat(String(v).replace(",", ".")); return isNaN(n) ? null : n; };
   const parseMental = text => { const t = String(text || "");
     const m1 = t.match(/score\s+of\s+(\d+(?:[.,]\d+)?)/i);
     const raw = m1 ? m1[1] : (t.match(/(\d+(?:[.,]\d+)?)/) || [])[1];
@@ -102,15 +103,17 @@ export function GameProvider({ children }) {
     const seed = (t.match(/seed\s+(\d+)/i) || [])[1] || null;
     const url = (t.match(/https?:\/\/\S+/i) || [])[0] || null;
     return { score, seed, url }; };
-  const addMental = text => { const { score, seed, url } = parseMental(text);
-    if (!(score > 0)) { fx.toast("Score introuvable 🤔 Colle le message de partage complet (« …score of 34.47… »)."); return { ok: false }; }
-    const cur = getS(); const list = cur.mental || [];
-    if (seed && list.some(e => e.seed === seed)) { fx.toast("Déjà enregistrée (même seed) ✓"); return { ok: false, dup: true }; }
-    const prevBest = list.length ? Math.min(...list.map(e => e.score)) : null;
-    const entry = { id: uid(), score, seed, url, ts: Date.now(), dk: todayKey() };
-    const skills = { ...cur.skills, xp: (cur.skills.xp || 0) + MENTAL_XP };
-    setS({ ...cur, mental: [...list, entry], skills });
-    const record = prevBest == null || score < prevBest;
+  const setMentalHigh = v => { const cur = getS(); setS({ ...cur, mentalHigh: !!v }); };
+  // e = { score, correct, wrong, timeSec, ops, seed, url } (correct/wrong/timeSec/ops optionnels)
+  const addMental = e => { const score = num(e.score);
+    if (!(score > 0)) { fx.toast("Il manque le score 🤔 (le nombre ⭐ de la carte)."); return { ok: false }; }
+    const cur = getS(); const list = cur.mental || []; const high = cur.mentalHigh !== false;
+    if (e.seed && list.some(x => x.seed === e.seed)) { fx.toast("Déjà enregistrée (même seed) ✓"); return { ok: false, dup: true }; }
+    const prevBest = list.length ? (high ? Math.max(...list.map(x => x.score)) : Math.min(...list.map(x => x.score))) : null;
+    const correct = num(e.correct), wrong = num(e.wrong);
+    const entry = { id: uid(), score, correct, wrong, timeSec: num(e.timeSec), ops: (e.ops || "").slice(0, 40) || null, seed: e.seed || null, url: e.url || null, ts: Date.now(), dk: todayKey() };
+    setS({ ...cur, mental: [...list, entry], skills: { ...cur.skills, xp: (cur.skills.xp || 0) + MENTAL_XP } });
+    const record = prevBest == null || (high ? score > prevBest : score < prevBest);
     if (record) fx.confetti(50);
     fx.toast("🧮 +" + MENTAL_XP + " XP · " + score + (record ? " · nouveau record 🔥" : (prevBest != null ? " (record " + prevBest + ")" : "")));
     return { ok: true, record, score }; };
@@ -298,7 +301,7 @@ export function GameProvider({ children }) {
   /* --- données --- */
   const doWipe = () => { if (confirm("Tout effacer : Cœur + Prépa ?") && confirm("Sûr de sûr ? Irréversible.")) { wipe(); fx.toast("Nouvelle partie. Deviens un monstre. 👹"); } };
 
-  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, addMental, removeMental, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
+  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, parseMental, addMental, removeMental, setMentalHigh, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
     logSession, startTimer, pauseTimer, resumeTimer, stopTimer, skipBreak, reconcileTimer, addProspect, advProspect, moveProspect, setProspectPrice, quickSale, removeProspect, shipFeature, removeShip, addMilestone, editMilestone, removeMilestone, moveMilestone, resetRoadmap, openProChest, doWipe };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

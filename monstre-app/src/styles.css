@@ -966,3 +966,15 @@ body.paper .study-home .sh-side b{color:var(--pink-ink)}
 .mm-row .mm-replay{text-decoration:none;font-size:16px;color:var(--bic);padding:2px 6px;border-radius:8px}
 .mm-row .mm-del{background:none;border:none;color:var(--pencil);font-size:13px;cursor:pointer;padding:2px 6px;opacity:.6;border-radius:8px}
 .mm-row .mm-del:hover{opacity:1;color:var(--penred)}
+
+/* --- Calcul mental : formulaire riche + sens du score --- */
+.mm-ok{font-size:12px;color:var(--green);font-weight:700;margin-top:6px}
+.mm-form{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+@media(min-width:560px){.mm-form{grid-template-columns:repeat(4,1fr)}}
+.mm-form label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:var(--pencil)}
+.mm-form label.wide{grid-column:1/-1}
+.mm-form input{background:var(--pcard);border:1.5px solid var(--pline);border-radius:10px;color:var(--pink-ink);font-family:var(--body);font-size:15px;font-weight:600;padding:9px 10px;outline:none;width:100%}
+.mm-form input:focus{border-color:var(--bic)}
+.mm-dir{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;font-weight:700;color:var(--pencil);flex-wrap:wrap}
+.mm-dir button{background:var(--pcard);border:1.5px solid var(--pline);color:var(--pencil);font-family:var(--body);font-weight:700;font-size:12.5px;padding:6px 11px;border-radius:99px;cursor:pointer}
+.mm-dir button.on{background:var(--bic);border-color:var(--bic);color:#fff}
