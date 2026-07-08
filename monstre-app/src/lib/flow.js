@@ -5,9 +5,9 @@
    pauses tissées entre les blocs d'effort. Aucune écriture ici — la vue lit
    `done`/`skipped`/`effort` et déclenche les mutations (voir game.jsx). */
 import { dkOf } from "./util.js";
-import { buildChecklist, DEADLINES, TODOS } from "./config.js";
-import { FLASH } from "./flash.js";
+import { buildChecklist, deadlines, todos, FEAT, flashCards } from "./config.js";
 import { mission } from "./coeur.js";
+import * as SPORT from "./sport.js";
 import { hm2min } from "./agenda.js";
 
 /* Habillage par type de bloc (tag + couleur du monde « nuit »). */
@@ -16,6 +16,7 @@ export const KIND = {
   review:  { tag: "Révision",   col: "var(--gold)" },
   read:    { tag: "Lecture",    col: "var(--orange)" },
   courage: { tag: "Courage",    col: "var(--pink)" },
+  sport:   { tag: "Sport",      col: "var(--pink)" },
   admin:   { tag: "Intendance", col: "var(--muted)" },
   rest:    { tag: "Repos",      col: "#5aa9ff" },
   wake:    { tag: "Réveil",     col: "var(--gold)" },
@@ -29,6 +30,8 @@ const DAY_META = {
   wake:  { emoji: "☀️", kind: "wake",   go: { world: "prepa", tab: "sleep" },    mins: 5 },
   drill: { emoji: "⚡", kind: "work",   go: { world: "prepa", tab: "drill" },    mins: 15 },
   math:  { emoji: "📐", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 45 },
+  code:  { emoji: "🐍", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 60 },
+  zh:    { emoji: "🇨🇳", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 20 },
   b1:    { emoji: "📐", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 180 },
   sci:   { emoji: "🔬", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 45 },
   b2:    { emoji: "🔬", kind: "work",   go: { world: "prepa", tab: "today" },    mins: 120 },
@@ -80,16 +83,19 @@ export function buildFlow(S, nowMs) {
   });
 
   /* 2) Blocs dynamiques (pas toujours dans la checklist). */
-  const dueFlash = FLASH.filter(c => { const s = (S.flash || {})[c.id]; return !s || s.due <= tk; }).length;
+  const dueFlash = flashCards().filter(c => { const s = (S.flash || {})[c.id]; return !s || s.due <= tk; }).length;
   const flashBlock = (!covered.has("flash") && dueFlash > 0)
     ? wrap({ id: "flash-dyn", kind: "review", emoji: "🧠", title: "Réviser " + dueFlash + " flashcard" + (dueFlash > 1 ? "s" : ""), sub: "Mémoire · Leitner", mins: 12, go: { world: "prepa", tab: "flash" } })
     : null;
 
-  const m = mission(S);
-  const mtxt = strMission(m);
-  const coeurBlock = wrap({ id: "coeur", kind: "courage", emoji: m.e, title: "Mission cœur du jour", sub: mtxt, mins: 10, go: { world: "coeur" }, done: coeurDaily > 0 || isDone("coeur") });
+  /* Bloc « canal courage » : mission cœur (Clément) OU contrat sport (Lucas). */
+  const isSport = FEAT().sport;
+  const m = isSport ? null : mission(S);
+  const coeurBlock = isSport
+    ? wrap({ id: "coeur", kind: "sport", emoji: "💪", title: "100 pompes + 100 squats", sub: "Le contrat quotidien — en séries si tu veux", mins: 15, go: { world: "sport" }, done: SPORT.dailyDone(S, tk) || isDone("coeur") })
+    : wrap({ id: "coeur", kind: "courage", emoji: m.e, title: "Mission cœur du jour", sub: strMission(m), mins: 10, go: { world: "coeur" }, done: coeurDaily > 0 || isDone("coeur") });
 
-  const openTodo = TODOS.find(t => !(S.todos && S.todos[t.id]));
+  const openTodo = todos().find(t => !(S.todos && S.todos[t.id]));
   const todoBlock = openTodo
     ? wrap({ id: "todo-" + openTodo.id, todoId: openTodo.id, kind: "admin", emoji: "🗂️", title: "Intendance rentrée", sub: openTodo.label, mins: 15, go: null, done: !!(S.todos && S.todos[openTodo.id]) })
     : null;
@@ -111,6 +117,7 @@ export function buildFlow(S, nowMs) {
   core.forEach(b => {
     if (b.dayId === "bed" && flashBlock && !flashIn) { out.push(flashBlock); flashIn = true; }   // réviser avant de dormir
     out.push(b);
+    if (isSport && b.dayId === "wake" && coeurBlock && !coeurIn) { out.push(coeurBlock); coeurIn = true; }  // 100/100 au réveil, avant la douche
     if (!b.effort) return;
     effort++;
     if (PAUSE_AT.has(effort) && pauses < PAUSES.length) {
@@ -150,5 +157,5 @@ export function pickQueue(blocks) {
 
 /* Prochaine échéance (bandeau), à J−N. */
 export function nextDeadline(tk) {
-  return DEADLINES.find(d => d.dk >= tk) || null;
+  return deadlines().find(d => d.dk >= tk) || null;
 }

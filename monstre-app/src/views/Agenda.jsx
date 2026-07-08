@@ -3,7 +3,7 @@ import { useGame } from "../game.jsx";
 import { usePeersAuto, myId } from "../store.js";
 import { toast } from "../fx.js";
 import { todayKey, fromDk, addDays, dkOf, uid, pad, WD, MO, frDate } from "../lib/util.js";
-import { DEADLINES, prepaBlocks, PREPA_COLOR } from "../lib/config.js";
+import { deadlines, prepaBlocks, PREPA_COLOR } from "../lib/config.js";
 import { CAL_START, CAL_END, CAL_HPX, CAL_TOTAL, MOF, EV_TYPES, DEF_TYPE, evTypeOf, evCoversDay, evIsRange, evDayCount, hm2min, min2hm, capEnd, calMonday, calWeekDays } from "../lib/agenda.js";
 
 export default function Agenda() {
@@ -21,7 +21,7 @@ export default function Agenda() {
   /* --- données --- */
   const evSort = (a, b) => (a.allDay ? -1 : 0) - (b.allDay ? -1 : 0) || hm2min(a.start) - hm2min(b.start);
   const evOfDay = dk => S.events.filter(e => evCoversDay(e, dk)).slice().sort(evSort);
-  const dlOf = dk => DEADLINES.filter(d => d.dk === dk);
+  const dlOf = dk => deadlines().filter(d => d.dk === dk);
 
   /* --- blocs prépa auto (fond du calendrier, privés, lecture seule) : masqués un jour déjà « matérialisé » en vrais événements --- */
   const hasGen = dk => S.events.some(e => e.gen === "prepa" && e.date === dk);

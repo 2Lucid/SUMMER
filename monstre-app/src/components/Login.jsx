@@ -27,11 +27,11 @@ export default function Login() {
       <div className="login-tag">Connecte-toi. Rejoins la course. Deviens un monstre cet été.</div>
       <div className="login-card">
         <label>Ton pseudo</label>
-        <input className="login-inp" autoComplete="off" spellCheck={false} placeholder="clement" value={pseudo} onChange={e => setPseudo(e.target.value)} onKeyDown={onKey} />
+        <input className="login-inp" autoComplete="off" spellCheck={false} placeholder="clement · lucas · …" value={pseudo} onChange={e => setPseudo(e.target.value)} onKeyDown={onKey} />
         <label>Ton code perso <span style={{ color: "var(--muted)", fontWeight: 400 }}>— secret, pour te reconnecter</span></label>
         <input className="login-inp" type="password" autoComplete="off" placeholder="••••" value={code} onChange={e => setCode(e.target.value)} onKeyDown={onKey} />
         <label>Nom affiché <span style={{ color: "var(--muted)", fontWeight: 400 }}>— si nouveau compte</span></label>
-        <input className="login-inp" autoComplete="off" placeholder="Clément" maxLength={22} value={name} onChange={e => setName(e.target.value)} onKeyDown={onKey} />
+        <input className="login-inp" autoComplete="off" placeholder="Ton prénom" maxLength={22} value={name} onChange={e => setName(e.target.value)} onKeyDown={onKey} />
         <label>Ton avatar</label>
         <div className="login-ava">
           {LOGIN_AVATARS.map(e => <button key={e} className={e === avatar ? "sel" : ""} onClick={() => setAvatar(e)}>{e}</button>)}

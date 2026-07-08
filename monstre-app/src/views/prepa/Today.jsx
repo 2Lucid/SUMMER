@@ -1,13 +1,13 @@
 import { useGame } from "../../game.jsx";
 import { todayKey, daysTo, addDays, frDate } from "../../lib/util.js";
-import { buildChecklist, rampOf, DEADLINES, TODOS, DEADLINE_XP } from "../../lib/config.js";
+import { buildChecklist, rampOf, deadlines, todos, DEADLINE_XP } from "../../lib/config.js";
 
 export default function Today() {
   const { S, toggleDay, doTodo, markDeadline } = useGame();
   const tk = todayKey(); const list = buildChecklist(tk); const ch = S.days[tk] || {};
   const nDone = list.filter(it => ch[it.id]).length; const pct = Math.round(nDone / list.length * 100); const r = rampOf(tk);
   const done = S.deadlinesDone || {};
-  const next = DEADLINES.filter(d => d.dk >= addDays(tk, -4)).slice(0, 4); const openTodos = TODOS.filter(t => !S.todos[t.id]);
+  const next = deadlines().filter(d => d.dk >= addDays(tk, -4)).slice(0, 4); const openTodos = todos().filter(t => !S.todos[t.id]);
 
   return (
     <>

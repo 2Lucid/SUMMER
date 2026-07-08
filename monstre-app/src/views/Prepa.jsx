@@ -1,4 +1,5 @@
 import { useGame } from "../game.jsx";
+import { FEAT } from "../lib/config.js";
 import Today from "./prepa/Today.jsx";
 import Planning from "./prepa/Planning.jsx";
 import Exam from "./prepa/Exam.jsx";
@@ -12,11 +13,12 @@ const TABS = [["today", "📋 Jour"], ["planning", "🗓️ Planning"], ["exam",
 
 export default function Prepa() {
   const { ui, setTab } = useGame();
+  const tabs = FEAT().exam ? TABS : TABS.filter(([id]) => id !== "exam");  // Contrôle = physique/chimie prépa, masqué hors profil prépa
   const V = { today: Today, planning: Planning, exam: Exam, drill: Drill, flash: Flash, mental: Mental, brain: Brain, sleep: Sleep }[ui.tab] || Today;
   return (
     <>
       <div className="p-tabstrip">
-        {TABS.map(([id, l]) => <button key={id} className={"p-tab " + (ui.tab === id ? "on" : "")} onClick={() => setTab(id)}>{l}</button>)}
+        {tabs.map(([id, l]) => <button key={id} className={"p-tab " + (ui.tab === id ? "on" : "")} onClick={() => setTab(id)}>{l}</button>)}
       </div>
       <V />
     </>

@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useGame } from "../game.jsx";
 import Radar from "../components/Radar.jsx";
 import { todayKey, addDays, daysTo, frDate, fromDk, MO } from "../lib/util.js";
-import { RENTREE, phaseOf, PHASE_META, rampOf, DEADLINES, checklistPct, studyStreak, sleepOkOf } from "../lib/config.js";
-import { FLASH, rankOf } from "../lib/flash.js";
+import { rentree, phaseOf, phaseMeta, rampOf, deadlines, checklistPct, studyStreak, sleepOkOf, FEAT, flashCards } from "../lib/config.js";
+import { rankOf } from "../lib/flash.js";
 import { LEVELS, levelIndex, mission, fearEntries } from "../lib/coeur.js";
 import { deposits7, WEEK_GOAL, coupleMicroOfDay, lovemapOfDay } from "../lib/couple.js";
+import * as SP from "../lib/sport.js";
 import * as STU from "../lib/study.js";
 
 const COEUR_TYPES = [["message", "📨 Messages"], ["convo", "💬 Relances"], ["proposer", "🎯 Propositions"], ["date", "🏖️ Dates"], ["couple", "💘 Couple"], ["rateau", "🥀 Râteaux"], ["irl", "⚡ Courage IRL"]];
@@ -13,29 +14,36 @@ const COEUR_COLS = { message: "var(--cyan)", convo: "var(--cyan)", proposer: "va
 
 export default function Home() {
   const { S, goto, setWorld, doWipe, setCouple } = useGame();
+  const F = FEAT();
   const [askCouple, setAskCouple] = useState(false);
   useEffect(() => {
-    if (S.couple != null) { setAskCouple(false); return; }
+    if (!F.coeur || S.couple != null) { setAskCouple(false); return; }
     const t = setTimeout(() => setAskCouple(true), 1600);  // laisse d'abord admirer la page
     return () => clearTimeout(t);
-  }, [S.couple]);
-  const tk = todayKey(); const ph = PHASE_META[phaseOf(tk)]; const r = rampOf(tk);
+  }, [S.couple, F.coeur]);
+  const tk = todayKey(); const ph = phaseMeta()[phaseOf(tk)]; const r = rampOf(tk);
   const pct = checklistPct(S, tk);
-  const due = FLASH.filter(c => { const s = S.flash[c.id]; return !s || s.due <= tk; }).length;
-  const next3 = DEADLINES.filter(d => d.dk >= tk).slice(0, 3); const nextDl = next3[0];
+  const FL = flashCards();
+  const due = FL.filter(c => { const s = S.flash[c.id]; return !s || s.due <= tk; }).length;
+  const next3 = deadlines().filter(d => d.dk >= tk).slice(0, 3); const nextDl = next3[0];
   const m = mission(S); const lvl = levelIndex(S.xp); const rank = rankOf(S.skills.xp || 0);
   const fe = fearEntries(S); const a1 = fe.length ? fe.slice(-3).reduce((s, e) => s + e.fear, 0) / Math.min(3, fe.length) : null;
   const hp = a1 == null ? 100 : Math.round(a1 * 10);
-  const dLeft = Math.max(0, daysTo(tk, RENTREE));
-  const isCouple = S.couple === true;
+  const dLeft = Math.max(0, daysTo(tk, rentree()));
+  const isCouple = F.coeur && S.couple === true;
   const dep = deposits7(S); const tank = Math.min(100, Math.round(dep / WEEK_GOAL * 100));
   const coupleDone = (S.coeurDaily[tk] || 0) > 0; const coupleMicro = coupleMicroOfDay(tk);
   const studyTotal = STU.totalMs(S), studyToday = STU.dayMs(S, tk), studyWeek = STU.weekMs(S, tk);
   const studyRunning = STU.isRunning(S);
+  /* — monde Sport (profil Lucas) — */
+  const spDone = SP.dailyDone(S, tk); const spN7 = SP.sessions7(S); const spTank = Math.min(100, Math.round(spN7 / SP.WEEK_GOAL * 100));
+  const spLvl = SP.levelIndex(S.xp); const spM = SP.sportMission(S);
+  const SPORT_TYPES = [["daily", "💪 Contrats 100/100"], ["salle", "🏋️ Salle"], ["natation", "🏊 Natation"], ["autre", "🏃 Autre sport"]];
+  const spFunnel = SPORT_TYPES.map(t => SP.countType(S, t[0])); const spFmax = Math.max(1, ...spFunnel);
 
   const boxes = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
-  FLASH.forEach(c => { const s = S.flash[c.id]; if (!s) boxes[0]++; else boxes[s.box || 1]++; });
-  const total = FLASH.length;
+  FL.forEach(c => { const s = S.flash[c.id]; if (!s) boxes[0]++; else boxes[s.box || 1]++; });
+  const total = FL.length;
   const leit = [["Nouvelles", boxes[0], "rgba(156,144,198,.9)"], ["Boîte 1 · 1 j", boxes[1], "var(--red)"], ["Boîte 2 · 3 j", boxes[2], "var(--orange)"], ["Boîte 3 · 7 j", boxes[3], "var(--cyan)"], ["Boîte 4 · 14 j", boxes[4], "var(--gold)"]];
 
   const last14 = []; for (let i = 13; i >= 0; i--) { const dk = addDays(tk, -i); last14.push({ dk, pct: dk < "2026-07-06" ? null : checklistPct(S, dk) }); }
@@ -59,9 +67,9 @@ export default function Home() {
 
       <div className="kpis">
         <KPI cls="gold" v={"J−" + dLeft} l="avant la rentrée" s={nextDl ? "⏳ " + nextDl.icon + " J−" + daysTo(tk, nextDl.dk) : "🎒 c'est parti"} />
-        <KPI cls="cyan" v={studyStreak(S) + " 🔥"} l="streak prépa" s={pct + "% du jour fait"} />
-        <KPI cls="pink" v={S.streak + " 🔥"} l="streak cœur" s={"record " + S.best} />
-        <KPI cls="orange" v={S.xp + (S.skills.xp || 0)} l="XP cumulé" s={"📓 " + (S.skills.xp || 0) + " · ❤️ " + S.xp} />
+        <KPI cls="cyan" v={studyStreak(S) + " 🔥"} l={"streak " + (F.worldLabel || "prépa").toLowerCase()} s={pct + "% du jour fait"} />
+        <KPI cls="pink" v={S.streak + " 🔥"} l={F.sport ? "streak sport" : "streak cœur"} s={"record " + S.best} />
+        <KPI cls="orange" v={S.xp + (S.skills.xp || 0)} l="XP cumulé" s={"📓 " + (S.skills.xp || 0) + " · " + (F.sport ? "💪 " : "❤️ ") + S.xp} />
       </div>
 
       <div className="study-home">
@@ -82,17 +90,31 @@ export default function Home() {
           <div className="ch-glow" />
           <div className="ch-head">
             <div className="ch-badge">
-              <span className="ch-heart">{isCouple ? "💞" : "❤️"}</span>
-              <span className="ch-lvl">Niv. {lvl + 1}</span>
+              <span className="ch-heart">{F.sport ? "💪" : isCouple ? "💞" : "❤️"}</span>
+              <span className="ch-lvl">Niv. {(F.sport ? spLvl : lvl) + 1}</span>
             </div>
             <div className="ch-title">
-              <h2>{isCouple ? "Notre couple" : "Arbre cœur"}</h2>
-              <div className="ch-sub">{isCouple ? "Mode couple" : LEVELS[lvl].t}</div>
+              <h2>{F.sport ? "La machine" : isCouple ? "Notre couple" : "Arbre cœur"}</h2>
+              <div className="ch-sub">{F.sport ? SP.LEVELS[spLvl].t : isCouple ? "Mode couple" : LEVELS[lvl].t}</div>
               <div className="ch-streak">🔥 {S.streak} j de streak · record {S.best}</div>
             </div>
-            <button className="btn ch-cta" onClick={() => setWorld("coeur")}>Ouvrir le Cœur →</button>
+            <button className="btn ch-cta" onClick={() => setWorld(F.sport ? "sport" : "coeur")}>{F.sport ? "Ouvrir le Sport →" : "Ouvrir le Cœur →"}</button>
           </div>
-          {isCouple ? (
+          {F.sport ? (
+            <>
+              <div className="ch-geste">
+                <span className="ch-geste-l">💪 Contrat du jour</span>
+                <span className="ch-geste-t">{spDone ? "✅ 100 pompes + 100 squats : fait. Machine." : "100 pompes + 100 squats — en séries si tu veux, mais aujourd'hui ça passe."}</span>
+              </div>
+              <div className="ch-funnel" style={{ marginTop: 10 }}>
+                {SPORT_TYPES.map((t, i) => (
+                  <div key={t[0]} className="lrow"><span className="ln" style={{ width: 132 }}>{t[1]}</span><div className="lbar"><i style={{ width: Math.round(spFunnel[i] / spFmax * 100) + "%", background: i === 0 ? "var(--pink)" : i === 3 ? "var(--orange)" : "var(--cyan)" }} /></div><span className="lc">{spFunnel[i]}</span></div>
+                ))}
+              </div>
+              <div className="hpbar love" style={{ marginTop: 12 }}><i style={{ width: spTank + "%" }} /></div>
+              <div className="hpmeta"><span>🏋️ Séances de la semaine ({spN7}/{SP.WEEK_GOAL})</span><span>{spTank}%</span></div>
+            </>
+          ) : isCouple ? (
             <>
               <div className="ch-geste">
                 <span className="ch-geste-l">💞 Geste du jour</span>
@@ -149,7 +171,13 @@ export default function Home() {
 
         <div>
           <div className="card mission">
-            {isCouple ? (
+            {F.sport ? (
+              <>
+                <h2>{spM.e} Mission sport du moment</h2>
+                <p>{spM.txt}</p>
+                <div className="row"><button className="btn small" onClick={() => setWorld("sport")}>Go →</button></div>
+              </>
+            ) : isCouple ? (
               <>
                 <h2>🗺️ Question du jour</h2>
                 <p>« {lovemapOfDay(tk)} »</p>
