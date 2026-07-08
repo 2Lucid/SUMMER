@@ -3,11 +3,12 @@ import { useGame } from "./game.jsx";
 import { useSync, useLogged, initApp, myId } from "./store.js";
 import { toast } from "./fx.js";
 import { todayKey, daysTo } from "./lib/util.js";
-import { RENTREE, phaseOf, PHASE_META } from "./lib/config.js";
+import { rentree, phaseOf, phaseMeta, schoolLabel, FEAT } from "./lib/config.js";
 import Home from "./views/Home.jsx";
 import Flow from "./views/Flow.jsx";
 import Coeur from "./views/Coeur.jsx";
 import CoeurCouple from "./views/CoeurCouple.jsx";
+import Sport from "./views/Sport.jsx";
 import Prepa from "./views/Prepa.jsx";
 import Agenda from "./views/Agenda.jsx";
 import Rank from "./views/Rank.jsx";
@@ -21,8 +22,8 @@ import Fx from "./components/Fx.jsx";
 
 function Appbar({ onSettings, pdark, onToggleDark }) {
   const { S, ui, setWorld } = useGame(); const sync = useSync();
-  const tk = todayKey(); const ph = PHASE_META[phaseOf(tk)];
-  const dLeft = Math.max(0, daysTo(tk, RENTREE));
+  const tk = todayKey(); const ph = phaseMeta()[phaseOf(tk)];
+  const dLeft = Math.max(0, daysTo(tk, rentree()));
   const dot = sync.cloud === "pending" ? "pending" : sync.cloud === "err" ? "err" : "ok";
   const pr = S.profile || {};
   return (
@@ -30,7 +31,7 @@ function Appbar({ onSettings, pdark, onToggleDark }) {
       <div className="abtop">
         <div className="ab-brand">
           {ui.world === "prepa"
-            ? <span>MONSTRE <span style={{ fontWeight: 500, fontSize: 12, color: "var(--pencil)" }}>· PCSI Stanislas</span></span>
+            ? <span>MONSTRE <span style={{ fontWeight: 500, fontSize: 12, color: "var(--pencil)" }}>· {schoolLabel()}</span></span>
             : <span><span className="g">MONSTRE</span> 👹🌴</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -49,7 +50,10 @@ function Appbar({ onSettings, pdark, onToggleDark }) {
 
 function WorldNav() {
   const { ui, setWorld } = useGame();
-  const items = [["home", "🏠", "Accueil"], ["flow", "🌀", "Flow"], ["coeur", "❤️", "Cœur"], ["prepa", "📓", "Prépa"], ["pro", "💼", "Pro"], ["agenda", "🗓️", "Planning"], ["rank", "🏆", "Classement"]];
+  const f = FEAT();
+  const items = [["home", "🏠", "Accueil"], ["flow", "🌀", "Flow"],
+    f.sport ? ["sport", "💪", "Sport"] : ["coeur", "❤️", "Cœur"],
+    ["prepa", "📓", f.worldLabel || "Prépa"], ["pro", "💼", "Pro"], ["agenda", "🗓️", "Planning"], ["rank", "🏆", "Classement"]];
   return (
     <div className="worldnav"><div className="inner">
       {items.map(([id, ic, l]) => (
@@ -73,11 +77,13 @@ export default function App() {
   useEffect(() => {
     const h = decodeURIComponent(location.hash.slice(1)); if (!h) return;
     const [w, t] = h.split(":");
-    if (["home", "flow", "coeur", "prepa", "pro", "agenda", "rank"].includes(w)) patch({ world: w, ...(t ? { tab: t } : {}) });
+    if (["home", "flow", "coeur", "sport", "prepa", "pro", "agenda", "rank"].includes(w)) patch({ world: w, ...(t ? { tab: t } : {}) });
   }, [patch]);
   useEffect(() => {
     let alive = true;
-    initApp().then(res => { if (alive && res && res.pen) setTimeout(() => toast("Hier : 0 action de courage. −" + res.pen.lost + " XP, streak à zéro. La flippe adore ça — aujourd'hui tu bouges. 👊"), 800); });
+    initApp().then(res => { if (alive && res && res.pen) setTimeout(() => toast(FEAT().sport
+      ? "Hier : 0 sport loggé. −" + res.pen.lost + " XP, streak à zéro. Le contrat, c'est TOUS les jours — aujourd'hui tu répares. 💪"
+      : "Hier : 0 action de courage. −" + res.pen.lost + " XP, streak à zéro. La flippe adore ça — aujourd'hui tu bouges. 👊"), 800); });
     return () => { alive = false; };
   }, []);
 
@@ -90,7 +96,8 @@ export default function App() {
         <Appbar onSettings={() => setSettingsOpen(true)} pdark={pdark} onToggleDark={() => setPdark(v => !v)} />
         {ui.world === "home" ? <Home />
           : ui.world === "flow" ? <Flow />
-          : ui.world === "coeur" ? (S.couple === true ? <CoeurCouple /> : <Coeur />)
+          : ui.world === "sport" ? <Sport />
+          : ui.world === "coeur" ? (FEAT().sport ? <Sport /> : S.couple === true ? <CoeurCouple /> : <Coeur />)
             : ui.world === "pro" ? <Pro />
             : ui.world === "agenda" ? <Agenda />
               : ui.world === "rank" ? <Rank />

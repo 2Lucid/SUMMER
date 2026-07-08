@@ -1,7 +1,6 @@
 import { addDays, todayKey } from "./util.js";
 import { DOMAINS } from "./drill.js";
-import { FLASH } from "./flash.js";
-import { buildChecklist, sleepOkOf } from "./config.js";
+import { buildChecklist, sleepOkOf, flashCards, FEAT } from "./config.js";
 
 const GA = 2.399963229728653; // angle d'or → répartition organique
 function layout(cx, cy, i, spread) { const r = 5 + spread * Math.sqrt(i); const a = i * GA; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
@@ -15,7 +14,7 @@ function mathM(S, id) {
   return clamp((lvlPart * 0.7 + ratePart * 0.3) * 100);
 }
 function flashM(S, deck) {
-  const cards = FLASH.filter(c => c.deck === deck); if (!cards.length) return 0;
+  const cards = flashCards().filter(c => c.deck === deck); if (!cards.length) return 0;
   let sum = 0; cards.forEach(c => { const s = S.flash[c.id]; sum += s ? (s.box || 1) : 0; });
   return clamp(sum / (cards.length * 4) * 100);
 }
@@ -31,30 +30,52 @@ function sleepM(S) { const tk = todayKey(); let tot = 0, ok = 0; for (let i = 0;
 
 const PHYS_TOPICS = [["Chute libre"], ["Énergie méca."], ["Lois de Newton"], ["Électricité"], ["Ondes"], ["Optique"]];
 const FLASH_DECKS = [["der", "Dérivées"], ["prim", "Primitives"], ["lim", "Limites"], ["trig", "Trigo"], ["form", "Formules"], ["courbe", "Courbes"]];
+/* Régions du cerveau de Lucas (BSc AIDAMS) — decks de SES flashcards. */
+const PY_DECKS = [["base", "Bases"], ["struct", "Structures"], ["flow", "Boucles & fonctions"], ["data", "NumPy / Pandas"]];
+const ZH_DECKS = [["tons", "Pinyin & tons"], ["salut", "Salutations"], ["base", "Mots de base"], ["nombres", "Nombres"], ["phrases", "Phrases"]];
+const MATHFLASH_DECKS = [["matrices", "Matrices"], ["vecteurs", "Vecteurs"], ["proba", "Probas"]];
 
-export const BRAIN_REGIONS = [
+export const BRAIN_REGIONS_PREPA = [
   { id: "maths", label: "Maths", color: "#35e0d0" },
   { id: "phys", label: "Physique", color: "#ff8e3c" },
   { id: "mem", label: "Mémoire", color: "#ffd166" },
   { id: "sci", label: "Sciences", color: "#8f7bff" },
   { id: "humain", label: "Le reste", color: "#ff3d8b" },
 ];
-
+export const BRAIN_REGIONS_AIDAMS = [
+  { id: "maths", label: "Maths", color: "#35e0d0" },
+  { id: "py", label: "Python", color: "#ff8e3c" },
+  { id: "mem", label: "Mémoire", color: "#ffd166" },
+  { id: "zh", label: "Chinois", color: "#8f7bff" },
+  { id: "humain", label: "Le reste", color: "#ff3d8b" },
+];
 export function brainData(S) {
+  const sport = FEAT().sport;
+  const REGIONS = sport ? BRAIN_REGIONS_AIDAMS : BRAIN_REGIONS_PREPA;
   const nodes = [];
   const add = (region, color, id, label, m, cx, cy, i, spread) => { const [x, y] = layout(cx, cy, i, spread); nodes.push({ id, region, color, label, m, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 }); };
 
   DOMAINS.forEach((d, i) => add("maths", "#35e0d0", "m_" + d.id, d.name, mathM(S, d.id), 96, 108, i, 6.4));
-  const pm = physM(S);
-  PHYS_TOPICS.forEach((t, i) => add("phys", "#ff8e3c", "p_" + i, t[0], pm, 252, 100, i, 8.5));
-  FLASH_DECKS.forEach((d, i) => add("mem", "#ffd166", "f_" + d[0], d[1], flashM(S, d[0]), 92, 214, i, 8.5));
-  const sci = checkRate(S, ["sci", "b2"]);
-  [["Chimie"], ["SI / Info"]].forEach((t, i) => add("sci", "#8f7bff", "s_" + i, t[0], sci, 250, 210, i, 14));
+  if (sport) {
+    /* Python : mémoire des decks py + pratique quotidienne (item `code`). */
+    const pyPractice = checkRate(S, ["code"]);
+    PY_DECKS.forEach((d, i) => add("py", "#ff8e3c", "p_" + i, d[1], clamp(flashM(S, d[0]) * 0.6 + pyPractice * 0.4), 252, 100, i, 8.5));
+    add("py", "#ff8e3c", "p_prat", "Pratique (CS50P)", pyPractice, 252, 100, PY_DECKS.length, 8.5);
+    MATHFLASH_DECKS.forEach((d, i) => add("mem", "#ffd166", "f_" + d[0], d[1], flashM(S, d[0]), 92, 214, i, 8.5));
+    const zhPractice = checkRate(S, ["zh"]);
+    ZH_DECKS.forEach((d, i) => add("zh", "#8f7bff", "s_" + i, d[1], clamp(flashM(S, d[0]) * 0.6 + zhPractice * 0.4), 250, 210, i, 10));
+  } else {
+    const pm = physM(S);
+    PHYS_TOPICS.forEach((t, i) => add("phys", "#ff8e3c", "p_" + i, t[0], pm, 252, 100, i, 8.5));
+    FLASH_DECKS.forEach((d, i) => add("mem", "#ffd166", "f_" + d[0], d[1], flashM(S, d[0]), 92, 214, i, 8.5));
+    const sci = checkRate(S, ["sci", "b2"]);
+    [["Chimie"], ["SI / Info"]].forEach((t, i) => add("sci", "#8f7bff", "s_" + i, t[0], sci, 250, 210, i, 14));
+  }
   const humain = [
     ["h_ang", "Anglais", checkRate(S, ["eng", "lang"])],
-    ["h_lec", "Lecture / Philo", checkRate(S, ["read"])],
+    ["h_lec", sport ? "Lecture (VO)" : "Lecture / Philo", checkRate(S, ["read"])],
     ["h_som", "Sommeil", sleepM(S)],
-    ["h_rel", "Relationnel", Math.min(100, Math.round(S.xp / 1500 * 100))],
+    ["h_rel", sport ? "Sport" : "Relationnel", Math.min(100, Math.round(S.xp / 1500 * 100))],
   ];
   humain.forEach((t, i) => add("humain", "#ff3d8b", t[0], t[1], t[2], 168, 256, i, 18));
 
@@ -71,6 +92,6 @@ export function brainData(S) {
   const total = nodes.length;
   const globalPct = Math.round(nodes.reduce((a, n) => a + n.m, 0) / total);
   const active = nodes.filter(n => n.m >= 40).length;
-  const byRegionPct = BRAIN_REGIONS.map(r => { const ns = nodes.filter(n => n.region === r.id); return { ...r, pct: ns.length ? Math.round(ns.reduce((a, n) => a + n.m, 0) / ns.length) : 0 }; });
+  const byRegionPct = REGIONS.map(r => { const ns = nodes.filter(n => n.region === r.id); return { ...r, pct: ns.length ? Math.round(ns.reduce((a, n) => a + n.m, 0) / ns.length) : 0 }; });
   return { nodes, edges, stats: { globalPct, active, total }, byRegion: byRegionPct, idx };
 }

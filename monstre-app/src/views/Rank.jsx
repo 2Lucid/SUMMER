@@ -52,7 +52,7 @@ export default function Rank() {
               <div className="lb-ava">{e.avatar}</div>
               <div className="lb-main">
                 <div className="lb-name">{e.name}{isMe && <span className="metag">toi</span>}{e.bot && <span className="bottag">🤖 rival</span>}</div>
-                <div className="lb-chips"><span>Niv. {e.lvl + 1}</span><span>❤️ {e.coeurStreak}🔥</span><span>📓 {e.study}🔥</span>{e.proStreak > 0 && <span>💼 {e.proStreak}🔥</span>}{e.chests > 0 && <span className="c-chip">🎁 {e.chests}</span>}<span>📓 {e.xpPrepa} · ❤️ {e.xpCoeur}</span></div>
+                <div className="lb-chips"><span>Niv. {e.lvl + 1}</span><span>{e.ch || "❤️"} {e.coeurStreak}🔥</span><span>📓 {e.study}🔥</span>{e.proStreak > 0 && <span>💼 {e.proStreak}🔥</span>}{e.chests > 0 && <span className="c-chip">🎁 {e.chests}</span>}<span>📓 {e.xpPrepa} · {e.ch || "❤️"} {e.xpCoeur}</span></div>
               </div>
               <div className="lb-xp"><b>{e.total}</b><small>XP TOTAL</small></div>
             </div>

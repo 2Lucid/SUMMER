@@ -5,10 +5,11 @@ import { uid, todayKey, yesterday, addDays, dkOf, pick, shuffle, frn } from "./l
 import { ACTIONS, LEVELS, EMOJIS, DAILY_BONUS, levelIndex } from "./lib/coeur.js";
 import { DOMAINS, genDrill } from "./lib/drill.js";
 import { buildExam } from "./lib/exam.js";
-import { FLASH, BOX_GAP, rankOf } from "./lib/flash.js";
+import { BOX_GAP, rankOf } from "./lib/flash.js";
 import * as W from "./lib/work.js";
 import * as STU from "./lib/study.js";
-import { prepaBlocks, PREPA_COLOR, CHECK_XP, DEADLINE_XP, MENTAL_XP } from "./lib/config.js";
+import { prepaBlocks, PREPA_COLOR, CHECK_XP, DEADLINE_XP, MENTAL_XP, flashCards } from "./lib/config.js";
+import * as SPORT from "./lib/sport.js";
 import { syncBots as computeBots } from "./lib/bots.js";
 
 const Ctx = createContext(null);
@@ -78,6 +79,42 @@ export function GameProvider({ children }) {
   const openModal = questId => setUi(u => ({ ...u, modal: { questId }, selAction: null, fear: 5 }));
   const closeModal = () => setUi(u => ({ ...u, modal: null }));
   const setCouple = v => { const cur = getS(); setS({ ...cur, couple: !!v }); fx.toast(v ? "C'est noté 💞 En couple." : "C'est noté 🔥 Célibataire — à toi de jouer."); };
+
+  /* --- Sport (profil Lucas) : même canal XP/streak/mise que le Cœur --- */
+  const sportAct = type => {
+    const a = SPORT.ACTIONS[type]; if (!a || a.weigh) return;
+    const cur = getS(); const today = todayKey();
+    if (a.daily && SPORT.dailyDone(cur)) { fx.toast("💪 Déjà validé aujourd'hui ✓ On remet ça demain."); return; }
+    pushUndo(a.label, cur);
+    const prevLvl = SPORT.levelIndex(cur.xp);
+    let gain = a.xp, bonus = "", streak = cur.streak, best = cur.best, lastDay = cur.lastDay;
+    if (lastDay !== today) { if (lastDay === yesterday()) streak += 1; else streak = 1; best = Math.max(best, streak); lastDay = today; gain += DAILY_BONUS; bonus = " (+" + DAILY_BONUS + " bonus du jour)"; }
+    let weekTxt = "";
+    if (a.session && SPORT.sessions7(cur) + 1 === SPORT.WEEK_GOAL) { gain += SPORT.WEEK_BONUS; weekTxt = " · " + SPORT.WEEK_GOAL + "e séance de la semaine +" + SPORT.WEEK_BONUS + " 🔥"; }
+    const log = [...cur.log, { id: uid(), questId: null, type, xp: a.xp, fear: null, ts: Date.now(), dk: today }];
+    const coeurDaily = { ...cur.coeurDaily, [today]: (cur.coeurDaily[today] || 0) + 1 };
+    const xp = cur.xp + gain;
+    setS({ ...cur, log, xp, streak, best, lastDay, coeurDaily });
+    fx.toast(a.emoji + " +" + gain + " XP · " + a.label + bonus + weekTxt);
+    if (weekTxt) fx.confetti(60); else if (a.session) fx.confetti(30);
+    const nl = SPORT.levelIndex(xp); if (nl > prevLvl) { fx.levelup(nl); fx.confetti(60); }
+  };
+  // Pesée : +10 XP, trace le poids — ne compte PAS comme action du jour (le contrat, c'est les 100/100).
+  const sportWeigh = kg => {
+    const v = parseFloat(String(kg).replace(",", ".")); if (!(v > 25 && v < 250)) { fx.toast("Un poids en kilos, genre 72.5 🙂"); return; }
+    const cur = getS(); const sp = cur.sport || { weight: [], prs: {} }; const tk = todayKey();
+    const weight = [...(sp.weight || []).filter(w => w.dk !== tk), { dk: tk, kg: Math.round(v * 10) / 10, ts: Date.now() }];
+    setS({ ...cur, sport: { ...sp, weight }, xp: cur.xp + SPORT.ACTIONS.pesee.xp });
+    fx.toast("⚖️ " + v + " kg noté · +" + SPORT.ACTIONS.pesee.xp + " XP — la masse se mesure 📈");
+  };
+  const sportSetPR = (id, val) => {
+    const v = Math.round(+val); if (!(v > 0 && v < 1000)) { fx.toast("Un nombre de reps, genre 32 💪"); return; }
+    const cur = getS(); const sp = cur.sport || { weight: [], prs: {} }; const old = (sp.prs || {})[id];
+    const record = !old || v > old.v;
+    setS({ ...cur, sport: { ...sp, prs: { ...(sp.prs || {}), [id]: { v, dk: todayKey() } } } });
+    if (record && old) { fx.confetti(50); fx.toast("🔥 NOUVEAU RECORD : " + v + " (avant : " + old.v + ")"); }
+    else fx.toast(record ? "📌 Record de départ posé : " + v : "Noté : " + v + " (record actuel " + old.v + ")");
+  };
 
   /* --- Chrono de travail prépa (global, sur toutes les pages) --- */
   const studyStart = () => { const cur = getS(); const st = cur.study || { running: null, sessions: [] }; if (st.running) return; setS({ ...cur, study: { ...st, running: { startedAt: Date.now() } } }); fx.toast("⏱️ Chrono prépa lancé — au boulot 👊"); };
@@ -172,7 +209,7 @@ export function GameProvider({ children }) {
   const endDrill = () => setUi(u => ({ ...u, sess: null }));
 
   /* --- Flash --- */
-  const flashDue = (subj = "all") => { const tk = todayKey(); const fl = getS().flash; return FLASH.filter(c => (subj === "all" || c.subject === subj) && (() => { const s = fl[c.id]; return !s || s.due <= tk; })()); };
+  const flashDue = (subj = "all") => { const tk = todayKey(); const fl = getS().flash; return flashCards().filter(c => (subj === "all" || c.subject === subj) && (() => { const s = fl[c.id]; return !s || s.due <= tk; })()); };
   const startFlash = () => setUi(u => ({ ...u, flash: { queue: shuffle(flashDue(u.flashSubj)).slice(0, 15), idx: 0, rev: false } }));
   const setFlashSubj = subj => setUi(u => ({ ...u, flashSubj: subj, flash: { queue: shuffle(flashDue(subj)).slice(0, 15), idx: 0, rev: false } }));
   const flipFlash = () => setUi(u => ({ ...u, flash: { ...u.flash, rev: !u.flash.rev } }));
@@ -306,7 +343,7 @@ export function GameProvider({ children }) {
   /* --- données --- */
   const doWipe = () => { if (confirm("Tout effacer : Cœur + Prépa ?") && confirm("Sûr de sûr ? Irréversible.")) { wipe(); fx.toast("Nouvelle partie. Deviens un monstre. 👹"); } };
 
-  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, parseMental, addMental, removeMental, setMentalHigh, syncBots, setBotsOn, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
+  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, sportAct, sportWeigh, sportSetPR, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, parseMental, addMental, removeMental, setMentalHigh, syncBots, setBotsOn, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
     logSession, startTimer, pauseTimer, resumeTimer, stopTimer, skipBreak, reconcileTimer, addProspect, advProspect, moveProspect, setProspectPrice, quickSale, removeProspect, shipFeature, removeShip, addMilestone, editMilestone, removeMilestone, moveMilestone, resetRoadmap, openProChest, doWipe };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

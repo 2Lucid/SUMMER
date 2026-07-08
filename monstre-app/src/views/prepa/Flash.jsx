@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { useGame } from "../../game.jsx";
 import { todayKey } from "../../lib/util.js";
-import { FLASH, SUBJECTS } from "../../lib/flash.js";
+import { flashCards, flashSubjects } from "../../lib/config.js";
 import MathText from "../../components/MathText.jsx";
 
 export default function Flash() {
   const { S, ui, startFlash, flipFlash, gradeFlash, setFlashSubj } = useGame();
+  const FLASH = flashCards(); const SUBJECTS = flashSubjects();
   const st = ui.flash;
   const subj = ui.flashSubj || "all";
   useEffect(() => { if (!st) startFlash(); }, [st, startFlash]);

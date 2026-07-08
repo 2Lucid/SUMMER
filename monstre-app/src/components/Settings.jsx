@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useSync, useS, SB, sbReady, exportSave, importSave, connectSupabase, disconnectSupabase, logout, myId } from "../store.js";
+import { FEAT } from "../lib/config.js";
 import { useGame } from "../game.jsx";
 import { toast } from "../fx.js";
 
@@ -54,15 +55,19 @@ export default function Settings({ onClose }) {
         </div>
         <div className="sheetrow"><button className="btn ghost block" onClick={exportSave}>💾 Télécharger une copie de secours</button></div>
 
-        <h3 style={{ marginTop: 18 }}>Cœur</h3>
-        <div className="set-hero">
-          <span className="sh-ic">{isCouple ? "💞" : "🔥"}</span>
-          <div>
-            <div className="sh-t">{isCouple ? "En couple" : "Célibataire"}</div>
-            <div className="sh-s">Le monde Cœur s'adapte : {isCouple ? "entretien & croissance de la relation (compte affectif, principes, love map)." : "courage & rencontres (funnel, boss de la flippe)."}</div>
-            <div className="sheetrow"><button className="btn ghost" onClick={() => setCouple(!isCouple)}>{isCouple ? "Repasser en célibataire" : "🎬 Voir le mode couple 💞"}</button></div>
-          </div>
-        </div>
+        {FEAT().coeur && (
+          <>
+            <h3 style={{ marginTop: 18 }}>Cœur</h3>
+            <div className="set-hero">
+              <span className="sh-ic">{isCouple ? "💞" : "🔥"}</span>
+              <div>
+                <div className="sh-t">{isCouple ? "En couple" : "Célibataire"}</div>
+                <div className="sh-s">Le monde Cœur s'adapte : {isCouple ? "entretien & croissance de la relation (compte affectif, principes, love map)." : "courage & rencontres (funnel, boss de la flippe)."}</div>
+                <div className="sheetrow"><button className="btn ghost" onClick={() => setCouple(!isCouple)}>{isCouple ? "Repasser en célibataire" : "🎬 Voir le mode couple 💞"}</button></div>
+              </div>
+            </div>
+          </>
+        )}
         <h3 style={{ marginTop: 18 }}>Garde de nuit</h3>
         <div className={"set-hero" + (ngOn ? "" : " off")}>
           <span className="sh-ic">{ngOn ? "🚨" : "😴"}</span>

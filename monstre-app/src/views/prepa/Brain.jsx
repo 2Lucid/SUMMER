@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useGame } from "../../game.jsx";
-import { brainData, BRAIN_REGIONS } from "../../lib/brain.js";
+import { brainData } from "../../lib/brain.js";
 
 export default function Brain() {
   const { S } = useGame();
   const [sel, setSel] = useState(null);
   const { nodes, edges, stats, byRegion, idx } = brainData(S);
   const selNode = sel != null ? nodes.find(n => n.id === sel) : null;
-  const regLabel = r => (BRAIN_REGIONS.find(x => x.id === r) || {}).label;
+  const regLabel = r => (byRegion.find(x => x.id === r) || {}).label;
   // libellés propres : un nom par région, au sommet de son amas
   const cent = {}; nodes.forEach(n => { const c = cent[n.region] || (cent[n.region] = { x: 0, y: 0, minY: 1e9, n: 0 }); c.x += n.x; c.y += n.y; c.minY = Math.min(c.minY, n.y); c.n++; });
   const regionTags = byRegion.map(r => { const c = cent[r.id]; return c ? { label: r.label, color: r.color, pct: r.pct, x: c.x / c.n, y: c.minY - 6 } : null; }).filter(Boolean);

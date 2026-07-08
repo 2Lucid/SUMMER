@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useGame } from "../game.jsx";
 import { confetti } from "../fx.js";
 import { daysTo, frDate } from "../lib/util.js";
-import { phaseOf, PHASE_META } from "../lib/config.js";
+import { phaseOf, phaseMeta } from "../lib/config.js";
 import { buildFlow, pickQueue, nextDeadline, KIND } from "../lib/flow.js";
 
 const pad2 = n => String(n).padStart(2, "0");
@@ -71,7 +71,7 @@ export default function Flow() {
   }
 
   /* ===== Programme du jour ===== */
-  const ph = PHASE_META[phaseOf(tk)];
+  const ph = phaseMeta()[phaseOf(tk)];
   const dl = nextDeadline(tk); const dlN = dl ? daysTo(tk, dl.dk) : null;
   const pct = nTotal ? Math.round(nDone / nTotal * 100) : 0;
   const doneList = blocks.filter(b => b.done && b.kind !== "pause" && b.kind !== "event");
