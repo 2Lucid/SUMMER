@@ -9,6 +9,7 @@ export const DEFAULT = () => ({
   couple: null,         // en couple ? null = pas encore demandé, true/false = réponse
 
   chests: { opened: [] },  // coffres récompenses déjà ouverts (ids)
+  bots: [], botsDk: null, botsOn: true,  // rivaux d'entraînement (classement) — s'adaptent à ton XP
   study: { running: null, sessions: [] },  // chrono de travail prépa — running={startedAt} ou null, sessions=[{id,ms,dk,ts}]
   work: { sessions: [], prospects: [], ships: [], chests: [], timer: null, roadmap: [] },  // monde Pro — logs bruts + roadmap LUCID éditable (vide ⇒ seed LUCID_MVP)
   flow: { pause: null, done: {}, skip: {} },  // Flow : pause minutée + faits/passés par jour

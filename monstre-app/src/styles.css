@@ -1010,3 +1010,9 @@ body.paper .study-home .sh-side b{color:var(--pink-ink)}
 .mm-import{margin-top:18px;border-top:1px solid var(--pline);padding-top:10px}
 .mm-import summary{font-size:12.5px;color:var(--pencil);cursor:pointer;font-weight:600;list-style:none}
 .mm-import summary::-webkit-details-marker{display:none}
+
+/* --- Classement : rivaux d'entraînement (bots) --- */
+.bottag{font-size:10px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-left:7px;white-space:nowrap}
+.lbrow.bot{opacity:.94}
+.lbrow.bot .lb-ava{filter:grayscale(.15)}
+.bots-note{font-size:11.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5;max-width:520px;margin-left:auto;margin-right:auto}

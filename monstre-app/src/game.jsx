@@ -9,6 +9,7 @@ import { FLASH, BOX_GAP, rankOf } from "./lib/flash.js";
 import * as W from "./lib/work.js";
 import * as STU from "./lib/study.js";
 import { prepaBlocks, PREPA_COLOR, CHECK_XP, DEADLINE_XP, MENTAL_XP } from "./lib/config.js";
+import { syncBots as computeBots } from "./lib/bots.js";
 
 const Ctx = createContext(null);
 export const useGame = () => useContext(Ctx);
@@ -119,6 +120,10 @@ export function GameProvider({ children }) {
     return { ok: true, record, score }; };
   const removeMental = id => { const cur = getS(); const e = (cur.mental || []).find(x => x.id === id); if (!e) return; if (!confirm("Retirer cette partie de calcul mental ?")) return;
     setS({ ...cur, mental: (cur.mental || []).filter(x => x.id !== id), skills: { ...cur.skills, xp: Math.max(0, (cur.skills.xp || 0) - MENTAL_XP) } }); };
+
+  /* --- Rivaux d'entraînement (classement) : sème/avance les bots calés sur mon XP --- */
+  const syncBots = () => { const cur = getS(); if (cur.botsOn === false) return; const r = computeBots(cur); if (r.changed) setS({ ...cur, bots: r.bots, botsDk: r.dk }); };
+  const setBotsOn = v => { const cur = getS(); setS({ ...cur, botsOn: !!v }); };
 
   /* --- Prépa (jour / sommeil) --- */
   // Cocher un item de la checklist = +5 XP (dopamine) ; décocher = −5 (net non exploitable).
@@ -301,7 +306,7 @@ export function GameProvider({ children }) {
   /* --- données --- */
   const doWipe = () => { if (confirm("Tout effacer : Cœur + Prépa ?") && confirm("Sûr de sûr ? Irréversible.")) { wipe(); fx.toast("Nouvelle partie. Deviens un monstre. 👹"); } };
 
-  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, parseMental, addMental, removeMental, setMentalHigh, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
+  const value = { S, ui, patch, setWorld, setTab, goto, addQuest, logAction, undoLast, undoTop, deleteLog, setStatus, removeQuest, openModal, closeModal, setCouple, studyStart, studyStop, toggleDay, doTodo, markDeadline, genPrepaPlan, parseMental, addMental, removeMental, setMentalHigh, syncBots, setBotsOn, upSleep, drillLvl, startDrill, drillSubmit, drillNext, endDrill, startFlash, flipFlash, gradeFlash, setFlashSubj, setExamCfg, startExam, examSubmit, examSetGrade, examSave, endExam, openChest, saveEvent, deleteEvent, flowMark, flowUnmark, flowSkip, flowPause, flowExtend, flowResume, flowRestart,
     logSession, startTimer, pauseTimer, resumeTimer, stopTimer, skipBreak, reconcileTimer, addProspect, advProspect, moveProspect, setProspectPrice, quickSale, removeProspect, shipFeature, removeShip, addMilestone, editMilestone, removeMilestone, moveMilestone, resetRoadmap, openProChest, doWipe };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

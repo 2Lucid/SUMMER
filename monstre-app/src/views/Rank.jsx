@@ -1,17 +1,24 @@
 import { useEffect, useRef } from "react";
 import { useS, usePeersAuto, refreshPeers, myId } from "../store.js";
+import { useGame } from "../game.jsx";
 import { peerStats } from "../lib/rank.js";
+import { botEntry } from "../lib/bots.js";
 import { confetti, toast } from "../fx.js";
 import Chests from "../components/Chests.jsx";
 
 export default function Rank() {
   const S = useS();
+  const { syncBots, setBotsOn } = useGame();
   const peers = usePeersAuto(true);
   const me = myId();
   const fired = useRef(false);
+  const botsOn = S.botsOn !== false;
+
+  useEffect(() => { syncBots(); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   let list = peers.map(peerStats);
   if (!list.some(e => e.id === me)) list.push(peerStats({ id: me, d: S, updated: null }));
+  if (botsOn) list = list.concat((S.bots || []).map(botEntry));
   list.sort((a, b) => b.total - a.total || b.study - a.study || b.coeurStreak - a.coeurStreak);
   const loading = peers.length === 0;
   const myI = list.findIndex(e => e.id === me);
@@ -40,18 +47,22 @@ export default function Rank() {
         : list.map((e, i) => {
           const isMe = e.id === me;
           return (
-            <div key={e.id} className={"lbrow" + (isMe ? " me" : "") + (i === 0 ? " top1" : "")}>
+            <div key={e.id} className={"lbrow" + (isMe ? " me" : "") + (i === 0 ? " top1" : "") + (e.bot ? " bot" : "")}>
               <div className="lb-rank">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "#" + (i + 1)}</div>
               <div className="lb-ava">{e.avatar}</div>
               <div className="lb-main">
-                <div className="lb-name">{e.name}{isMe && <span className="metag">toi</span>}</div>
+                <div className="lb-name">{e.name}{isMe && <span className="metag">toi</span>}{e.bot && <span className="bottag">🤖 rival</span>}</div>
                 <div className="lb-chips"><span>Niv. {e.lvl + 1}</span><span>❤️ {e.coeurStreak}🔥</span><span>📓 {e.study}🔥</span>{e.proStreak > 0 && <span>💼 {e.proStreak}🔥</span>}{e.chests > 0 && <span className="c-chip">🎁 {e.chests}</span>}<span>📓 {e.xpPrepa} · ❤️ {e.xpCoeur}</span></div>
               </div>
               <div className="lb-xp"><b>{e.total}</b><small>XP TOTAL</small></div>
             </div>
           );
         })}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}><button className="btn ghost small" onClick={refresh}>↻ Rafraîchir</button></div>
+      {botsOn && <div className="bots-note">🤖 Les « rivaux » s'adaptent à ton niveau d'XP pour te pousser en continu — bosse fort, tu les doubles ; relâche, ils te rattrapent.</div>}
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+        <button className="btn ghost small" onClick={refresh}>↻ Rafraîchir</button>
+        <button className="btn ghost small" onClick={() => setBotsOn(!botsOn)}>{botsOn ? "🤖 Rivaux : ON" : "🤖 Rivaux : OFF"}</button>
+      </div>
     </>
   );
 }
